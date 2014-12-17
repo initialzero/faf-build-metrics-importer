@@ -1,0 +1,26 @@
+{
+  "conf": {
+    "log4js": {
+      "appenders": [{
+          "type": "console"
+      }],
+      "levels": {
+        "flow": "info"
+      }
+    },
+    "jenkins": {
+      "usr": "",
+      "pwd": "",
+      "url": "build-master-fafj.jaspersoft.com",
+      "ignore": [
+        "qa-visualize"
+      ]
+    },
+    "pg": {
+      "usr": "postgres",
+      "pwd": "postgres",
+      "host": "localhost",
+      "db_name": "tmp1"
+    }
+  }
+}
