@@ -16,7 +16,7 @@ pg.init(function(err, info) {
     check();
     setInterval(function() {
         check();
-    }, 1 * 60 * 1000);
+    }, conf.interval);
 });
 
 function check() {
