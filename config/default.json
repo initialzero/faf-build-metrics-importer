@@ -8,7 +8,7 @@
         "flow": "info"
       }
     },
-    "interval": 30000,
+    "interval": 300000,
     "jenkins": {
       "usr": "",
       "pwd": "",
