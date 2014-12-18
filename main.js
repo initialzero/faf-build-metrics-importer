@@ -28,7 +28,7 @@ function check() {
 
         logFlow.debug("Jobs:", jobs);
 
-        if (!jobs.length) {
+        if (!jobs || !jobs.length) {
             logFlow.info("Job list empty");
             return finish(null, "");
         }
