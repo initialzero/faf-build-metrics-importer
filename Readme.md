@@ -10,3 +10,10 @@ Tool for import, parse and put to DB FAF build data
 - processor
 
     put function which get, process and save data to database
+
+
+### TODO
+redesign db
+refactor pg module, add getBuildId, getJobId
+log to file
+memory usage
