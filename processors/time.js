@@ -3,9 +3,28 @@ var conf = require("config").get("conf"),
     pgClient = require("../components/pgClient"),
     query = "INSERT INTO faf_metrics_build_time (job_id, build, task_name, task_time) VALUES ($1, $2, $3, $4)";
 
+function buildJenkinsUrl(job, path) {
+
+    var url = "http://";
+
+    if (conf.jenkins["usr"]) {
+        url = url + conf.jenkins["usr"];
+        if (conf.jenkins["pwd"]) {
+            url = url + ":" + conf.jenkins["pwd"];
+        }
+        url = url + "@";
+    }
+
+    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
+
+    return  url;
+}
+
 module.exports = function(job, build, callback) {
 
     var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
+    console.log(urlToQueryJenkins);
+    process.exit(0);
 
     request(urlToQueryJenkins, function(error, response, body) {
         var queryArr = [],
@@ -26,20 +45,3 @@ module.exports = function(job, build, callback) {
     });
 
 };
-
-function buildJenkinsUrl(job, path) {
-
-    var url = "http://";
-
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
-        }
-        url = url + "@";
-    }
-
-    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
-
-    return  url;
-}
