@@ -1,9 +1,10 @@
 {
   "conf": {
     "log4js": {
-      "appenders": [{
-          "type": "console"
-      }],
+      "appenders": [
+        {"type": "console"},
+        {"type": "file", "filename": "faf-build-metrics-importer.log"}
+      ],
       "levels": {
         "flow": "info"
       }

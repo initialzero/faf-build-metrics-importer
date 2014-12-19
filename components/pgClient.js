@@ -5,12 +5,8 @@ var pg = require('pg'),
     log4js = require('log4js'),
 
     pgConnection,
-    pgConnectionEstablished = false,
+    pgConnectionEstablished = false;
 
-    conString = "postgres://" + conf.pg["usr"] +
-        ":" + conf.pg["pwd"] +
-        "@" + conf.pg["host"] +
-        "/" + conf.pg["db_name"];
 
 log4js.configure(conf.log4js);
 var logFlow = log4js.getLogger("flow");
@@ -22,8 +18,20 @@ function connect() {
     if (pgConnectionEstablished) {
         return dfr.resolve();
     }
+    // if not connected, let's connect to server
 
-    // if not connected, connecting to server
+    /// build the connection URL
+    var conString = "postgres://";
+    if (conf.pg["usr"]) {
+        conString = conString + conf.pg["usr"];
+        if (conf.pg["pwd"]) {
+            conString = conString + ":" + conf.pg["pwd"];
+        }
+        conString = conString + "@";
+    }
+    conString = conString + conf.pg["host"] + "/" + conf.pg["db_name"];
+
+    // make connection
     pgConnection = new pg.Client(conString);
     pgConnection.connect(function(err) {
 

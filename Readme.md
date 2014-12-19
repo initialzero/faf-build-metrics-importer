@@ -28,8 +28,8 @@ cp config/default.json.example config/default.json
 The settings you need to declare are:
  * in **pg** key
   * database name -- required
-  * database user name -- required
-  * database user password -- required
+  * database user name -- not required
+  * database user password -- not required
  * in **jenkins** key
   * url of the Jenkins -- required
   * username -- not required

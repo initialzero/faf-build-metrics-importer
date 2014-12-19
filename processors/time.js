@@ -23,8 +23,6 @@ function buildJenkinsUrl(job, path) {
 module.exports = function(job, build, callback) {
 
     var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
-    console.log(urlToQueryJenkins);
-    process.exit(0);
 
     request(urlToQueryJenkins, function(error, response, body) {
         var queryArr = [],

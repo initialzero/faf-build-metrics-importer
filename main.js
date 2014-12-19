@@ -62,15 +62,15 @@ function checkCIJobs() {
 
         // run them in parallel
         async.parallel(stack, finish);
-
-        logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
-        setTimeout(checkCIJobs, conf.interval);
     });
 }
 
 function finish(err, res) {
     err && logFlow.error(err);
     logFlow.info("Finish");
+
+    logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
+    setTimeout(checkCIJobs, conf.interval);
 }
 
 function jobFlow(job, callback) {
@@ -147,7 +147,7 @@ function saveBuildInDb(callback, results) {
 
     }).done(function() {
         lastBuildInfo[job.name] = build.number;
-        callback(err);
+        callback(null);
     });
 }
 
