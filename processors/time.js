@@ -1,12 +1,30 @@
 var conf = require("config").get("conf"),
     request = require("request"),
-    pg = require("../components/pg"),
+    pgClient = require("../components/pgClient"),
     query = "INSERT INTO faf_metrics_build_time (job_id, build, task_name, task_time) VALUES ($1, $2, $3, $4)";
 
+function buildJenkinsUrl(job, path) {
+
+    var url = "http://";
+
+    if (conf.jenkins["usr"]) {
+        url = url + conf.jenkins["usr"];
+        if (conf.jenkins["pwd"]) {
+            url = url + ":" + conf.jenkins["pwd"];
+        }
+        url = url + "@";
+    }
+
+    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
+
+    return  url;
+}
 
 module.exports = function(job, build, callback) {
 
-    request(url(job.name, "build/metrics/time.json"), function(error, response, body) {
+    var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
+
+    request(urlToQueryJenkins, function(error, response, body) {
         var queryArr = [],
             data;
         try {
@@ -15,7 +33,7 @@ module.exports = function(job, build, callback) {
             data.forEach(function(item) {
                 queryArr.push([query, [job.id, build.number, item[0], item[1]]]);
             });
-            pg.doQueryStack(queryArr, function(err, res) {
+            pgClient.doQueryStack(queryArr, function(err, res) {
                 callback(err, { time: data.length });
             });
 
@@ -25,11 +43,3 @@ module.exports = function(job, build, callback) {
     });
 
 };
-
-function url(job, path) {
-    return "http://" +
-        conf.jenkins["usr"] + ":" +
-        conf.jenkins["pwd"] + "@" +
-        conf.jenkins["url"] + "/job/" +
-        job + "/ws/" + path;
-}

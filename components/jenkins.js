@@ -1,31 +1,56 @@
 var conf = require("config").get("conf"),
+    Deferred = require('Deferred'),
     request = require('request');
 
-module.exports = {
-    get: function(jobName, buildId, callback) {
-        request(url(jobName, buildId), function(err, response, body) {
-            try {
-                body = JSON.parse(body);
-            } catch(e) {
+function buildJenkinsUrl(job, build) {
 
-            } finally {
-                callback(err, body);
-            }
-        });
+    var url = "http://";
+
+    if (conf.jenkins["usr"]) {
+        url = url + conf.jenkins["usr"];
+        if (conf.jenkins["pwd"]) {
+            url = url + ":" + conf.jenkins["pwd"];
+        }
+        url = url + "@";
     }
-};
 
+    url = url + conf.jenkins["url"];
 
-function url(job, build) {
-    var url = "http://" +
-        conf.jenkins["usr"] + ":" +
-        conf.jenkins["pwd"] + "@" +
-        conf.jenkins["url"];
     if (job) {
         url += "/job/" + job;
         if (build) {
             url += "/" + build;
         }
     }
-    return url + "/api/json";
+
+    url = url + "/api/json";
+
+    return  url;
 }
+
+module.exports = {
+
+    get: function(jobName, buildId) {
+        
+        var dfr = new Deferred(),
+            urlToQueryJenkins = buildJenkinsUrl(jobName, buildId);
+        
+        request(urlToQueryJenkins, function(error, response, body) {
+
+            if (error || response.statusCode != 200) {
+                dfr.rejectWith(this, [error || "Response code is " + response.statusCode]);
+                return;
+            }
+
+            try {
+                body = JSON.parse(body);
+            } catch(e) {
+
+            } finally {
+                dfr.resolveWith(this, [body]);
+            }
+        });
+        
+        return dfr;
+    }
+};
