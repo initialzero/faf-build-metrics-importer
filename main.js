@@ -145,16 +145,18 @@ function saveBuildInDb(callback, results) {
 
     pgClient.saveBuild(job, build).fail(function() {
 
-    }).done(function() {
+    }).done(function(build_id) {
         lastBuildInfo[job.name] = build.number;
-        callback(null);
+        build.build_id = build_id;
+
+        callback(null, build);
     });
 }
 
 function processReports(callback, results) {
 
     var job = results.saveJobInDb,
-        build = results.getLastBuildInfo,
+        build = results.saveBuildInDb,
         stack = [];
 
     if (!job || !build || job.empty || job.skipped || build.building) {

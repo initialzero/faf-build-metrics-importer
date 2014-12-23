@@ -129,5 +129,4 @@ TODO
 =============
 - redesign db
 - refactor pg module, add getBuildId, getJobId
-- log to file
 - memory usage

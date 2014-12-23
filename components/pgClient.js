@@ -60,7 +60,7 @@ module.exports = {
 
             // connection established.
             // now, get from db lastBuildsProcessed
-            doQueryDfr(
+            doQuery(
                 "SELECT " +
                     "jj.job_name," +
                     "MAX(b.build) as build_id " +
@@ -71,10 +71,10 @@ module.exports = {
                     "jj.job_id = b.job_id " +
                 "GROUP BY " +
                     "jj.job_name", []
-            ).fail(function(){
+            ).fail(function(err){
 
                 // failed to make this request
-                dfr.reject();
+                dfr.reject(err);
                     
             }).done(function(data) {
 
@@ -83,7 +83,7 @@ module.exports = {
                     info[row.job_name] = row.build_id;
                 });
 
-                dfr.resolveWith(this, [info]);
+                dfr.resolve(info);
             });
 
         }).fail(function(){
@@ -108,45 +108,55 @@ module.exports = {
 
     saveBuild: function(job, build) {
         
-        var dfr = new Deferred(),
-            startedBy,
-            changeSet = JSON.stringify(build.changeSet);
+        var dfr = new Deferred();
 
-        try {
-            startedBy = JSON.stringify(build.actions).match(/userId\":\"(\w+)/);
-            startedBy.shift();
-            startedBy = startedBy.join(", ");
-        } catch (e) {
-            startedBy = "CSM"
-        }
 
-        doQueryDfr("INSERT INTO faf_metrics_build (" +
-            "job_id, build, started, duration, started_by, result, change_set" +
-            ") VALUES ($1, $2, $3, $4, $5, $6, $7) ", [
-                job.id,
-                build.number,
-                new Date(build.timestamp),
-                build.duration,
-                startedBy,
-                build.result,
-                changeSet
-        
-        ]).done(function() {
-            dfr.resolve();
-        }).fail(function(){
-            dfr.reject();
+
+        getBuildId(job.id, build.number, function(err, build_id) {
+            var startedBy,
+                changeSet;
+
+            if (build_id) {
+                dfr.resolve(build_id);
+            } else {
+                changeSet = JSON.stringify(build.changeSet);
+                try {
+                    startedBy = JSON.stringify(build.actions).match(/userId\":\"(\w+)/);
+                    startedBy.shift();
+                    startedBy = startedBy.join(", ");
+                } catch (e) {
+                    startedBy = "CSM"
+                }
+
+                doQuery("INSERT INTO faf_metrics_build (" +
+                "job_id, build, started, duration, started_by, result, change_set" +
+                ") VALUES ($1, $2, $3, $4, $5, $6, $7) ", [
+                    job.id,
+                    build.number,
+                    new Date(build.timestamp),
+                    build.duration,
+                    startedBy,
+                    build.result,
+                    changeSet
+
+                ]).done(function() {
+                    getBuildId(job.id, build.number, function(err, build_id) {
+                        dfr.resolve(build_id);
+                    });
+                }).fail(function(err){
+                    dfr.reject(err);
+                });
+            }
         });
+
+
 
         return dfr;
     }
 };
 
 
-function doQuery(query, params, callback) {
-    pgConnection.query(query, params, callback);
-}
-
-function doQueryDfr (query, params) {
+function doQuery (query, params) {
     var dfr = new Deferred();
     pgConnection.query(query, params, function(err, result) {
         if (err) {
@@ -154,26 +164,53 @@ function doQueryDfr (query, params) {
             dfr.reject();
             return;
         }
-        dfr.resolveWith(this, [result]);
+        dfr.resolve(result);
     });
     return dfr;
 }
 
-function doQueryStack(queryArr, callback) {
+function doQueryStack(queryArr) {
+    var dfr = new Deferred();
     async.each(queryArr, function(query, callback) {
-        doQuery(query[0], query[1], callback);
-    }, callback);
+        doQuery(
+            query[0],
+            query[1]
+        ).done(function(res) {
+            callback(null, res);
+        }).fail(function(err) {
+            callback(err);
+        });
+    }, function(err, res) {
+        if (err) {
+            dfr.reject(err);
+        } else {
+            dfr.resolve(res);
+        }
+    });
+
+    return dfr;
 }
 
 
 function getJobId(jobName, callback) {
-    doQuery("SELECT job_id FROM faf_metrics_jenkins_jobs WHERE job_name = $1", [jobName], function(err, res) {
+    doQuery("SELECT job_id FROM faf_metrics_jenkins_jobs WHERE job_name = $1", [jobName]).done(function(res) {
         var jobId = res && res.rows && res.rows[0] && res.rows[0].job_id;
-        callback(err, jobId);
-    });
+        callback(null, jobId);
+    }).fail(callback);
 }
 function insertJob(jobName, callback) {
-    doQuery("INSERT INTO faf_metrics_jenkins_jobs (job_name) VALUES ($1)", [jobName], function(err,res) {
+    doQuery("INSERT INTO faf_metrics_jenkins_jobs (job_name) VALUES ($1)", [jobName]).done(function(err,res) {
         getJobId(jobName, callback);
-    });
+    }).fail(callback);
+}
+
+
+function getBuildId(job_id, build, callback) {
+    doQuery(
+        "SELECT build_id FROM faf_metrics_build WHERE job_id = $1 AND build = $2",
+        [job_id, build]
+    ).done(function(res) {
+        var build_id = res && res.rows && res.rows[0] && res.rows[0].build_id;
+        callback(null, build_id);
+    }).fail(callback);
 }

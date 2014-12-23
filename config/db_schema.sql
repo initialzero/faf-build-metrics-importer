@@ -34,6 +34,7 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE faf_metrics_build (
+    build_id integer NOT NULL,
     job_id integer NOT NULL,
     build integer NOT NULL,
     started timestamp without time zone NOT NULL,
@@ -45,15 +46,53 @@ CREATE TABLE faf_metrics_build (
 
 
 --
+-- Name: faf_metrics_build_build_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE faf_metrics_build_build_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: faf_metrics_build_build_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE faf_metrics_build_build_id_seq OWNED BY faf_metrics_build.build_id;
+
+
+--
 -- Name: faf_metrics_build_time; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE faf_metrics_build_time (
-    job_id integer NOT NULL,
-    build integer NOT NULL,
+    id integer NOT NULL,
+    build_id integer NOT NULL,
     task_name text NOT NULL,
     task_time integer NOT NULL
 );
+
+
+--
+-- Name: faf_metrics_build_time_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE faf_metrics_build_time_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: faf_metrics_build_time_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE faf_metrics_build_time_id_seq OWNED BY faf_metrics_build_time.id;
 
 
 --
@@ -86,6 +125,20 @@ ALTER SEQUENCE faf_metrics_jenkins_jobs_job_id_seq OWNED BY faf_metrics_jenkins_
 
 
 --
+-- Name: build_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build ALTER COLUMN build_id SET DEFAULT nextval('faf_metrics_build_build_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build_time ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_time_id_seq'::regclass);
+
+
+--
 -- Name: job_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -96,16 +149,30 @@ ALTER TABLE ONLY faf_metrics_jenkins_jobs ALTER COLUMN job_id SET DEFAULT nextva
 -- Data for Name: faf_metrics_build; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY faf_metrics_build (job_id, build, started, duration, started_by, result, change_set) FROM stdin;
+COPY faf_metrics_build (build_id, job_id, build, started, duration, started_by, result, change_set) FROM stdin;
 \.
+
+
+--
+-- Name: faf_metrics_build_build_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('faf_metrics_build_build_id_seq', 1, false);
 
 
 --
 -- Data for Name: faf_metrics_build_time; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY faf_metrics_build_time (job_id, build, task_name, task_time) FROM stdin;
+COPY faf_metrics_build_time (id, build_id, task_name, task_time) FROM stdin;
 \.
+
+
+--
+-- Name: faf_metrics_build_time_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('faf_metrics_build_time_id_seq', 1, false);
 
 
 --
@@ -120,31 +187,39 @@ COPY faf_metrics_jenkins_jobs (job_id, job_name) FROM stdin;
 -- Name: faf_metrics_jenkins_jobs_job_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('faf_metrics_jenkins_jobs_job_id_seq', 2092, true);
+SELECT pg_catalog.setval('faf_metrics_jenkins_jobs_job_id_seq', 1, false);
 
 
 --
--- Name: faf_metrics_build_PKey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: faf_metrics_build_job_id_build_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY faf_metrics_build
-    ADD CONSTRAINT "faf_metrics_build_PKey" PRIMARY KEY (job_id, build);
+    ADD CONSTRAINT faf_metrics_build_job_id_build_key UNIQUE (job_id, build);
 
 
 --
--- Name: faf_metrics_build_time_PKey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: faf_metrics_build_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY faf_metrics_build
+    ADD CONSTRAINT faf_metrics_build_pkey PRIMARY KEY (build_id);
+
+
+--
+-- Name: faf_metrics_build_time_build_id_task_name_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY faf_metrics_build_time
-    ADD CONSTRAINT "faf_metrics_build_time_PKey" PRIMARY KEY (job_id, build, task_name);
+    ADD CONSTRAINT faf_metrics_build_time_build_id_task_name_key UNIQUE (build_id, task_name);
 
 
 --
--- Name: faf_metrics_jenkins_jobs_PKey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: faf_metrics_build_time_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
-ALTER TABLE ONLY faf_metrics_jenkins_jobs
-    ADD CONSTRAINT "faf_metrics_jenkins_jobs_PKey" PRIMARY KEY (job_id);
+ALTER TABLE ONLY faf_metrics_build_time
+    ADD CONSTRAINT faf_metrics_build_time_pkey PRIMARY KEY (id);
 
 
 --
@@ -153,6 +228,30 @@ ALTER TABLE ONLY faf_metrics_jenkins_jobs
 
 ALTER TABLE ONLY faf_metrics_jenkins_jobs
     ADD CONSTRAINT faf_metrics_jenkins_jobs_job_name_key UNIQUE (job_name);
+
+
+--
+-- Name: faf_metrics_jenkins_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY faf_metrics_jenkins_jobs
+    ADD CONSTRAINT faf_metrics_jenkins_jobs_pkey PRIMARY KEY (job_id);
+
+
+--
+-- Name: faf_metrics_build_job_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build
+    ADD CONSTRAINT faf_metrics_build_job_id_fkey FOREIGN KEY (job_id) REFERENCES faf_metrics_jenkins_jobs(job_id);
+
+
+--
+-- Name: faf_metrics_build_time_build_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build_time
+    ADD CONSTRAINT faf_metrics_build_time_build_id_fkey FOREIGN KEY (build_id) REFERENCES faf_metrics_build(build_id);
 
 
 --

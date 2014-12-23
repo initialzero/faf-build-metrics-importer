@@ -1,7 +1,9 @@
 var conf = require("config").get("conf"),
     request = require("request"),
     pgClient = require("../components/pgClient"),
-    query = "INSERT INTO faf_metrics_build_time (job_id, build, task_name, task_time) VALUES ($1, $2, $3, $4)";
+    query = "INSERT INTO faf_metrics_build_time (" +
+        "build_id, task_name, task_time" +
+        ") VALUES ($1, $2, $3)";
 
 function buildJenkinsUrl(job, path) {
 
@@ -26,17 +28,29 @@ module.exports = function(job, build, callback) {
 
     request(urlToQueryJenkins, function(error, response, body) {
         var queryArr = [],
-            data;
+            data,
+            processed = [];
         try {
             data = JSON.parse(body);
 
+            // calc average data for repeated tasks
             data.forEach(function(item) {
-                queryArr.push([query, [job.id, build.number, item[0], item[1]]]);
-            });
-            pgClient.doQueryStack(queryArr, function(err, res) {
-                callback(err, { time: data.length });
+                if (typeof processed[item[0]] !== "undefined") {
+                    processed[item[0]] = Math.round((processed[item[0]] + item[1]) / 2);
+                } else {
+                    processed[item[0]] = item[1];
+                }
             });
 
+            Object.keys(processed).forEach(function(key) {
+                queryArr.push([query, [build.build_id, key, processed[key]]]);
+            });
+
+            pgClient.doQueryStack(queryArr).done(function(res) {
+                callback(null, {time: data.length});
+            }).fail(function(err){
+                callback(err);
+            });
         } catch (e) {
             callback(error, { time: 0 });
         }
