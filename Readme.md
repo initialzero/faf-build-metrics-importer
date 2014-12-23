@@ -54,6 +54,34 @@ $ node ./main.js
 ```
 Looks fine ! So, now it's time to put this command to some bash script and daemonize it.
 
+Making it Daemon
+=======
+
+The best way to make this service daemon, it to create a system service which will be launched during startup. We don't provide support for all operation systems, at least we support Ubuntu. So, read below how to make it.
+
+### Ubuntu
+
+1\. Became a root
+
+2\. Copy init.d file and set proper execution rights:
+```
+cp init.d/ubuntu/faf-build-metrics-importer /etc/init.d/
+chmod 775 /etc/init.d/faf-build-metrics-importer
+```
+and repace some variables inside this file:
+ * WORKING_DIRECTORY=\<DIRECTORY\>
+ * DAEMON=\<PATH_TO_NODE\>
+ * USER_TO_RUN=\<USERNAME\>
+
+3\. Set up the script for execution
+```
+update-rc.d faf-build-metrics-importer defaults 97 03
+```
+If you need to remove it from the launch list, you can use next command:
+```
+update-rc.d -f faf-build-metrics-importer remove
+```
+
 Reports... what is this ?
 ==================
 Report is a ....
