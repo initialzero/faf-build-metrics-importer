@@ -3,7 +3,7 @@ var conf = require("config").get("conf"),
     log4js = require('log4js'),
     jenkins = require("./components/jenkins"),
     pgClient = require("./components/pgClient"),
-    processors = require("./processors/index"),
+    processorsHeap = require("./processors/index"),
     lastBuildInfo = {};
 
 log4js.configure(conf.log4js);
@@ -18,12 +18,21 @@ pgClient.init().fail(function() {
 }).done(function(info) {
 
     lastBuildInfo = info;
-
     logFlow.info("Last build info: ", lastBuildInfo);
 
-    logFlow.info("Start checking CI jobs...");
-    
-    checkCIJobs();
+    logFlow.info("Going to initialize processors...");
+
+    // now, init the processors which needs to be initialized
+    processorsHeap.initAllProcessors().done(function(){
+
+        // ok great, everything is done, let's proceed
+        logFlow.info("Processors have been initialized, so let's continue");
+
+        logFlow.info("Start checking CI jobs...");
+
+        checkCIJobs();
+
+    });
 });
 
 function checkCIJobs() {
@@ -163,9 +172,11 @@ function processReports(callback, results) {
         return callback();
     }
 
+    var processors = processorsHeap.getAllProcessors();
+
     Object.keys(processors).forEach(function(type) {
-        if (processors[type]) {
-            stack.push(async.apply(processors[type], job, build));
+        if (processors[type].run) {
+            stack.push(async.apply(processors[type].run, job, build));
         }
     });
 

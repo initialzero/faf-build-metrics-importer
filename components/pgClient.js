@@ -152,15 +152,21 @@ module.exports = {
 
 
         return dfr;
-    }
+    },
+
+    // export some functions
+    doQuery: doQuery
 };
 
 
-function doQuery (query, params) {
+function doQuery (query, params, silent) {
     var dfr = new Deferred();
+    silent = silent || false;
     pgConnection.query(query, params, function(err, result) {
         if (err) {
-            logFlow.error("Failed to make a request: '" + query + "'. The reason is: ", err);
+            if (!silent) {
+                logFlow.error("Failed to make a request: '" + query + "'. The reason is: ", err);
+            }
             dfr.reject();
             return;
         }

@@ -22,38 +22,38 @@ function buildJenkinsUrl(job, path) {
     return  url;
 }
 
-module.exports = function(job, build, callback) {
+module.exports = {
 
-    var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
+    run: function(job, build, callback) {
+        request(urlToQueryJenkins, function(error, response, body) {
+            var queryArr = [],
+                data,
+                processed = [];
+            try {
+                data = JSON.parse(body);
 
-    request(urlToQueryJenkins, function(error, response, body) {
-        var queryArr = [],
-            data,
-            processed = [];
-        try {
-            data = JSON.parse(body);
+                // calc average data for repeated tasks
+                data.forEach(function(item) {
+                    if (typeof processed[item[0]] !== "undefined") {
+                        processed[item[0]] = Math.round((processed[item[0]] + item[1]) / 2);
+                    } else {
+                        processed[item[0]] = item[1];
+                    }
+                });
 
-            // calc average data for repeated tasks
-            data.forEach(function(item) {
-                if (typeof processed[item[0]] !== "undefined") {
-                    processed[item[0]] = Math.round((processed[item[0]] + item[1]) / 2);
-                } else {
-                    processed[item[0]] = item[1];
-                }
-            });
+                Object.keys(processed).forEach(function(key) {
+                    queryArr.push([query, [build.build_id, key, processed[key]]]);
+                });
 
-            Object.keys(processed).forEach(function(key) {
-                queryArr.push([query, [build.build_id, key, processed[key]]]);
-            });
-
-            pgClient.doQueryStack(queryArr).done(function(res) {
-                callback(null, {time: data.length});
-            }).fail(function(err){
-                callback(err);
-            });
-        } catch (e) {
-            callback(error, { time: 0 });
-        }
-    });
-
+                pgClient.doQueryStack(queryArr).done(function(res) {
+                    callback(null, {time: data.length});
+                }).fail(function(err){
+                    callback(err);
+                });
+            } catch (e) {
+                callback(error, { time: 0 });
+            }
+        });
+    }
 };
+

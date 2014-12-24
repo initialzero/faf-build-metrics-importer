@@ -96,6 +96,38 @@ ALTER SEQUENCE faf_metrics_build_time_id_seq OWNED BY faf_metrics_build_time.id;
 
 
 --
+-- Name: faf_metrics_build_coverage; Type: TABLE; Schema: public; Owner: -; Tablespace:
+--
+
+CREATE TABLE faf_metrics_build_coverage (
+    id integer NOT NULL,
+    build_id integer NOT NULL,
+    functionsCovered float,
+    branchesCovered float,
+    linesCovered float
+);
+
+
+--
+-- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE faf_metrics_build_coverage_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE faf_metrics_build_coverage_id_seq OWNED BY faf_metrics_build_coverage.id;
+
+
+--
 -- Name: faf_metrics_jenkins_jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -140,6 +172,11 @@ ALTER TABLE ONLY faf_metrics_build ALTER COLUMN build_id SET DEFAULT nextval('fa
 ALTER TABLE ONLY faf_metrics_build_time ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_time_id_seq'::regclass);
 
 
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build_coverage ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_coverage_id_seq'::regclass);
 --
 -- Name: job_id; Type: DEFAULT; Schema: public; Owner: -
 --
@@ -237,6 +274,21 @@ SELECT pg_catalog.setval('faf_metrics_build_time_id_seq', 22, true);
 
 
 --
+-- Data for Name: faf_metrics_build_coverage; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY faf_metrics_build_coverage (id, build_id, functionsCovered, branchesCovered, linesCovered) FROM stdin;
+\.
+
+
+--
+-- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('faf_metrics_build_coverage_id_seq', 1, false);
+
+
+--
 -- Data for Name: faf_metrics_jenkins_jobs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -313,11 +365,19 @@ ALTER TABLE ONLY faf_metrics_build_time
 
 
 --
--- Name: faf_metrics_build_time_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: faf_metrics_build_time_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace:
 --
 
 ALTER TABLE ONLY faf_metrics_build_time
     ADD CONSTRAINT faf_metrics_build_time_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: faf_metrics_build_coverage_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace:
+--
+
+ALTER TABLE ONLY faf_metrics_build_coverage
+    ADD CONSTRAINT faf_metrics_build_coverage_pkey PRIMARY KEY (id);
 
 
 --
@@ -350,6 +410,14 @@ ALTER TABLE ONLY faf_metrics_build
 
 ALTER TABLE ONLY faf_metrics_build_time
     ADD CONSTRAINT faf_metrics_build_time_build_id_fkey FOREIGN KEY (build_id) REFERENCES faf_metrics_build(build_id);
+
+
+--
+-- Name: faf_metrics_build_coverage_build_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY faf_metrics_build_coverage
+    ADD CONSTRAINT faf_metrics_build_coverage_build_id_fkey FOREIGN KEY (build_id) REFERENCES faf_metrics_build(build_id);
 
 
 --
