@@ -198,9 +198,23 @@ function getJobId(jobName, callback) {
         callback(null, jobId);
     }).fail(callback);
 }
-function insertJob(jobName, callback) {
-    doQuery("INSERT INTO faf_metrics_jenkins_jobs (job_name) VALUES ($1)", [jobName]).done(function(err,res) {
-        getJobId(jobName, callback);
+function insertJob(name, callback) {
+    var module, feature, res;
+
+    res = name.match(/^module-([\w-]+)-trunk[-]?([\w-\.]+)?$/);
+
+    if (res === null) {
+        module = feature = name;
+    } else {
+        module = res[1] || name;
+        feature = res[2] || (name.match(/trunk$/) ? "trunk" : name);
+    }
+
+    doQuery(
+        "INSERT INTO faf_metrics_jenkins_jobs (job_name, module, feature) VALUES ($1, $2, $3)",
+        [name, module, feature]
+    ).done(function(err,res) {
+        getJobId(name, callback);
     }).fail(callback);
 }
 
