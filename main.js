@@ -1,4 +1,5 @@
 var conf = require("config").get("conf"),
+    http = require('http'),
     async = require("async"),
     log4js = require('log4js'),
     jenkins = require("./components/jenkins"),
@@ -20,6 +21,11 @@ pgClient.init().fail(function() {
 
     lastBuildInfo = info;
     logFlow.info("Last build info: ", lastBuildInfo);
+
+    http.createServer(function(req, res) {
+        res.end("<pre>" + JSON.stringify(lastBuildInfo, null, " ") + "</pre>");
+    }).listen(8085);
+    logFlow.info("Http server started at localhost:8085");
 
     logFlow.info("Going to initialize processors...");
 
