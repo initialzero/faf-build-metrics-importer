@@ -6,7 +6,9 @@
         {"type": "file", "filename": "faf-build-metrics-importer.log"}
       ],
       "levels": {
-        "flow": "info"
+        "main": "info",
+        "coverage": "info",
+        "time": "info"
       }
     },
     "interval": 300000,

@@ -7,28 +7,28 @@ var conf = require("config").get("conf"),
     lastBuildInfo = {};
 
 log4js.configure(conf.log4js);
-var logFlow = log4js.getLogger("flow");
+var log = log4js.getLogger("main");
 
 
 pgClient.init().fail(function() {
 
-    logFlow.error("Failed to initialize PostgreSQL connection");
+    log.error("Failed to initialize PostgreSQL connection");
     process.exit(-1);
 
 }).done(function(info) {
 
     lastBuildInfo = info;
-    logFlow.info("Last build info: ", lastBuildInfo);
+    log.info("Last build info: ", lastBuildInfo);
 
-    logFlow.info("Going to initialize processors...");
+    log.info("Going to initialize processors...");
 
     // now, init the processors which needs to be initialized
     processorsHeap.initAllProcessors().done(function(){
 
         // ok great, everything is done, let's proceed
-        logFlow.info("Processors have been initialized, so let's continue");
+        log.info("Processors have been initialized, so let's continue");
 
-        logFlow.info("Start checking CI jobs...");
+        log.info("Start checking CI jobs...");
 
         checkCIJobs();
 
@@ -38,14 +38,14 @@ pgClient.init().fail(function() {
 function checkCIJobs() {
     
     // get full job list
-    logFlow.info("Getting full list of jobs...");
+    log.info("Getting full list of jobs...");
 
     jenkins.get(null, null).fail(function(reason) {
 
-        logFlow.error("Failed to get list of jobs on CI. Reason is: ", reason);
+        log.error("Failed to get list of jobs on CI. Reason is: ", reason);
 
         // maybe it was a temporary error ? let's make another request later
-        logFlow.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
+        log.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
         setTimeout(checkCIJobs, conf.interval);
 
     }).done(function(res) {
@@ -53,10 +53,10 @@ function checkCIJobs() {
         var stack = [],
             jobs = res.jobs;
 
-        logFlow.debug("Jobs found on CI:", jobs);
+        log.debug("Jobs found on CI:", jobs);
 
         if (!jobs || !jobs.length) {
-            logFlow.info("Job list empty");
+            log.info("Job list empty");
             return finish(null, "");
         }
 
@@ -75,15 +75,15 @@ function checkCIJobs() {
 }
 
 function finish(err, res) {
-    err && logFlow.error(err);
-    logFlow.info("Finish");
+    err && log.error(err);
+    log.info("Finish");
 
-    logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
+    log.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
     setTimeout(checkCIJobs, conf.interval);
 }
 
 function jobFlow(job, callback) {
-    logFlow.debug("Flow start");
+    log.debug("Flow start");
     async.auto({
         getJobInfo: getJobInfo(job.name),
         getLastBuildInfo: ["getJobInfo", getLastBuildInfo],
@@ -98,7 +98,7 @@ function jobFlow(job, callback) {
 function getJobInfo(jobName) {
     return function(callback) {
 
-        logFlow.debug("getJobInfo. Job:", jobName);
+        log.debug("getJobInfo. Job:", jobName);
 
         jenkins.get(jobName, null).fail(function(reason) {
             callback(true, reason);
@@ -119,7 +119,7 @@ function getLastBuildInfo(callback, results) {
         return callback();
     }
 
-    logFlow.debug("getLastBuildInfo. Job:", job.name, " Build:", job.lastBuild.number);
+    log.debug("getLastBuildInfo. Job:", job.name, " Build:", job.lastBuild.number);
 
     jenkins.get(job.name, job.lastBuild.number).fail(function(reason){
         callback(true, reason);
@@ -134,7 +134,7 @@ function saveJobInDb(callback, results) {
         return callback();
     }
 
-    logFlow.debug("saveJobInDb. Job:", job.name);
+    log.debug("saveJobInDb. Job:", job.name);
 
     pgClient.saveJob(job, function(err, job_id) {
         job.id = job_id;
@@ -150,7 +150,7 @@ function saveBuildInDb(callback, results) {
         return callback();
     }
 
-    logFlow.debug("saveBuildInDb. Job:", job.name, " Build:", build.number);
+    log.debug("saveBuildInDb. Job:", job.name, " Build:", build.number);
 
     pgClient.saveBuild(job, build).fail(function() {
 
