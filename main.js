@@ -178,7 +178,7 @@ function processReports(callback, results) {
         build = results.saveBuildInDb,
         stack = [];
 
-    if (!job || !build || job.empty || job.skipped || build.building) {
+    if (!job || !build || job.empty || job.skipped || build.building || (build.result !== "SUCCESS")) {
         return callback();
     }
 
