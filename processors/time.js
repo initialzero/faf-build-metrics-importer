@@ -6,7 +6,7 @@ var conf = require("config").get("conf"),
         "build_id, task_name, task_time" +
         ") VALUES ($1, $2, $3)";
 
-log4js.configure(conf.log4js);
+//log4js.configure(conf.log4js);
 var procLog = log4js.getLogger("timeProcessor");
 
 function buildJenkinsUrl(job, path) {
@@ -32,16 +32,23 @@ module.exports = {
 
         var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
 
-        procLog.info("checking job: ", job.displayName);
+        procLog.debug("checking job: ", job.name);
 
         request(urlToQueryJenkins, function(error, response, body) {
+            if (error || response.statusCode !== 200) {
+                procLog.warn("Failed to get timing data for job: ", job.name);
+                callback(null, error || "responce: " + response.statusCode);
+                return;
+            }
+
             var queryArr = [],
                 data,
                 processed = [];
+
             try {
                 data = JSON.parse(body);
 
-                procLog.info("Got timing data for job: ", job.displayName);
+                procLog.debug("Got timing data for job: ", job.name);
 
                 // calc average data for repeated tasks
                 data.forEach(function(item) {
@@ -56,19 +63,19 @@ module.exports = {
                     queryArr.push([query, [build.build_id, key, processed[key]]]);
                 });
 
-                procLog.info("Going to save timing data for job: ", job.displayName);
+                procLog.debug("Going to save timing data for job: ", job.name);
 
                 pgClient.doQueryStack(queryArr).done(function(res) {
-                    procLog.info("Saved timing data for job: ", job.displayName);
+                    procLog.debug("Saved timing data for job: ", job.name);
                     callback(null, {time: data.length});
                 }).fail(function(err){
-                    procLog.info("Failed to save timing data for job: ", job.displayName);
+                    procLog.error("Failed to save timing data for job: ", job.name);
                     callback(err);
                 });
 
             } catch (e) {
-                procLog.info("Failed to get timing data for job: ", job.displayName);
-                callback(error, { time: 0 });
+                procLog.warn("Failed to get timing data for job: ", job.name);
+                callback(error);
             }
         });
     }

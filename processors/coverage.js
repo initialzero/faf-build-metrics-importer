@@ -5,7 +5,7 @@ var conf = require("config").get("conf"),
     Deferred = require("Deferred"),
     pgClient = require("../components/pgClient");
 
-log4js.configure(conf.log4js);
+//log4js.configure(conf.log4js);
 var procLog = log4js.getLogger("coverageProcessor");
 
 function buildJenkinsUrl(job, path) {
@@ -173,18 +173,15 @@ module.exports = {
 
     run: function (job, build, callback) {
 
-        procLog.info("Checking job: ", job.displayName);
+        procLog.debug("Checking job: ", job.name);
 
-        getCoverageXMLFile(job, build).fail(function (reason) {
-            procLog.info("Failed to get XML for job ", job.displayName, ". Reason: ", reason);
-            callback(reason);
-        }).done(function (xmlCoverageFileContent) {
+        getCoverageXMLFile(job, build).done(function (xmlCoverageFileContent) {
 
-            procLog.info("Got XMl file from buildmaster for job ", job.displayName);
+            procLog.debug("Got XMl file from buildmater for job ", job.name);
 
             getStatisticFromXML(xmlCoverageFileContent).done(function (statistic) {
 
-                procLog.info("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, "), saving it ...");
+                procLog.debug("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.name, "), saving it ...");
 
                 var sql =
                     "INSERT INTO faf_metrics_build_coverage (" +
@@ -202,17 +199,21 @@ module.exports = {
                     statistic.branchesCovered,
                     statistic.linesCovered
                 ]).done(function () {
-                    procLog.info("Saved coverage statistic for job ", job.displayName);
+                    procLog.debug("Saved coverage statistic for job ", job.name);
                     callback(null, statistic);
-                }).fail(function (reason) {
-                    procLog.error("Failed to save coverage statistic for job ", job.displayName);
-                    callback(reason);
+                }).fail(function (err) {
+                    procLog.error("Failed to save coverage statistic for job ", job.name);
+                    callback(err);
                 });
 
-            }).fail(function(reason){
-                procLog.error("Failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, ")");
-                callback(reason);
+            }).fail(function(err){
+                procLog.error("Failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.name, ")");
+                callback(err);
             });
+        }).fail(function (reason) {
+            procLog.warn("Failed to get XML for job ", job.name, ". Reason: ", reason);
+            callback(null, reason);
         });
+
     }
 };

@@ -6,9 +6,10 @@
         {"type": "file", "filename": "faf-build-metrics-importer.log"}
       ],
       "levels": {
-        "main": "info",
-        "coverage": "info",
-        "time": "info"
+        "flow": "info",
+        "main": "error",
+        "coverageProcessor": "error",
+        "timeProcessor": "error"
       }
     },
     "interval": 300000,
@@ -17,7 +18,8 @@
       "pwd": "",
       "url": "build-master-fafj.jaspersoft.com",
       "ignore": [
-        "qa-visualize"
+        "qa-visualize",
+        "env-backup-jenkins"
       ]
     },
     "pg": {

@@ -7,7 +7,8 @@ var conf = require("config").get("conf"),
     lastBuildInfo = {};
 
 log4js.configure(conf.log4js);
-var log = log4js.getLogger("main");
+var log = log4js.getLogger("main"),
+    logFlow = log4js.getLogger("flow");
 
 
 pgClient.init().fail(function() {
@@ -18,17 +19,17 @@ pgClient.init().fail(function() {
 }).done(function(info) {
 
     lastBuildInfo = info;
-    log.info("Last build info: ", lastBuildInfo);
+    logFlow.info("Last build info: ", lastBuildInfo);
 
-    log.info("Going to initialize processors...");
+    logFlow.info("Going to initialize processors...");
 
     // now, init the processors which needs to be initialized
     processorsHeap.initAllProcessors().done(function(){
 
         // ok great, everything is done, let's proceed
-        log.info("Processors have been initialized, so let's continue");
+        logFlow.info("Processors have been initialized, so let's continue");
 
-        log.info("Start checking CI jobs...");
+        logFlow.info("Start checking CI jobs...");
 
         checkCIJobs();
 
@@ -38,14 +39,14 @@ pgClient.init().fail(function() {
 function checkCIJobs() {
     
     // get full job list
-    log.info("Getting full list of jobs...");
+    logFlow.info("Getting full list of jobs...");
 
     jenkins.get(null, null).fail(function(reason) {
 
         log.error("Failed to get list of jobs on CI. Reason is: ", reason);
 
         // maybe it was a temporary error ? let's make another request later
-        log.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
+        logFlow.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
         setTimeout(checkCIJobs, conf.interval);
 
     }).done(function(res) {
@@ -56,14 +57,14 @@ function checkCIJobs() {
         log.debug("Jobs found on CI:", jobs);
 
         if (!jobs || !jobs.length) {
-            log.info("Job list empty");
+            logFlow.info("Job list empty");
             return finish(null, "");
         }
 
         // build the list of jobs
         jobs.forEach(function(job) {
 
-            log.debug("Building task list for job ", job.name);
+            logFlow.debug("Building task list for job ", job.name);
 
             // ignore some jobs which are not faf modules
             if (conf.jenkins.ignore.indexOf(job.name) > -1) {
@@ -79,9 +80,9 @@ function checkCIJobs() {
 
 function finish(err, res) {
     err && log.error(err);
-    log.info("Finish");
+    logFlow.info("Finish");
 
-    log.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
+    logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
     setTimeout(checkCIJobs, conf.interval);
 }
 
@@ -174,6 +175,8 @@ function processReports(callback, results) {
     if (!job || !build || job.empty || job.skipped || build.building) {
         return callback();
     }
+
+    log.debug("processReports. Job:", job.name, " Build:", build.number);
 
     var processors = processorsHeap.getAllProcessors();
 
