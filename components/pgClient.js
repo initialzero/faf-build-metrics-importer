@@ -152,10 +152,7 @@ module.exports = {
 
 
         return dfr;
-    },
-
-    // export some functions
-    doQuery: doQuery
+    }
 };
 
 

@@ -6,7 +6,7 @@ var conf = require("config").get("conf"),
     pgClient = require("../components/pgClient");
 
 log4js.configure(conf.log4js);
-var log = log4js.getLogger("coverage");
+var procLog = log4js.getLogger("coverageProcessor");
 
 function buildJenkinsUrl(job, path) {
 
@@ -77,8 +77,8 @@ function getStatisticFromXML(xmlData) {
             });
         });
 
-        //log.info("Methods: ", totalHittedMethods, "of", totalMethods, ", rate is: ", totalHittedMethods / totalMethods);
-        //log.info("Lines: ", totalHittedLines, "of", totalLines, ", rate is: ", totalHittedLines / totalLines);
+        //procLog.info("Methods: ", totalHittedMethods, "of", totalMethods, ", rate is: ", totalHittedMethods / totalMethods);
+        //procLog.info("Lines: ", totalHittedLines, "of", totalLines, ", rate is: ", totalHittedLines / totalLines);
 
         myStat.functionsCovered = totalHittedMethods / totalMethods;
         myStat.linesCovered = totalHittedLines / totalLines;
@@ -118,7 +118,7 @@ module.exports = {
         pgClient.doQuery("SELECT * FROM faf_metrics_build_coverage LIMIT 1", [], true).fail(function () {
 
             // There is no table which needed for this module, so let's create it...
-            log.info("Creating a table for 'faf_metrics_build_coverage' processor");
+            procLog.info("Creating a table for 'faf_metrics_build_coverage' processor");
 
             var createTableSQL = "CREATE TABLE faf_metrics_build_coverage ("+
                 "id integer NOT NULL," +
@@ -129,7 +129,7 @@ module.exports = {
 
             pgClient.doQuery(createTableSQL, []).fail(function () {
 
-                log.error("Failed to initialize module 'coverage': can't create table 'faf_metrics_build_coverage'");
+                procLog.error("Failed to initialize module 'coverage': can't create table 'faf_metrics_build_coverage'");
                 doneCallbackFunc();
 
             }).done(function(){
@@ -173,18 +173,18 @@ module.exports = {
 
     run: function (job, build, callback) {
 
-        log.info("Coverage processor: checking job: ", job.displayName);
+        procLog.info("Checking job: ", job.displayName);
 
         getCoverageXMLFile(job, build).fail(function (reason) {
-            log.info("Coverage processor: failed to get XML for job ", job.displayName, ". Reason: ", reason);
+            procLog.info("Failed to get XML for job ", job.displayName, ". Reason: ", reason);
             callback(reason);
         }).done(function (xmlCoverageFileContent) {
 
-            log.info("Coverage processor: Got XMl file from buildmater for job ", job.displayName);
+            procLog.info("Got XMl file from buildmaster for job ", job.displayName);
 
             getStatisticFromXML(xmlCoverageFileContent).done(function (statistic) {
 
-                log.info("Coverage processor: got coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, "), saving it ...");
+                procLog.info("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, "), saving it ...");
 
                 var sql =
                     "INSERT INTO faf_metrics_build_coverage (" +
@@ -197,26 +197,22 @@ module.exports = {
 
                 pgClient.doQuery(sql, [
                     job.id,
-                    build.number,
+                    build.build_id,
                     statistic.functionsCovered,
                     statistic.branchesCovered,
                     statistic.linesCovered
                 ]).done(function () {
-                    log.info("Coverage processor: saved coverage statistic for job ", job.displayName);
+                    procLog.info("Saved coverage statistic for job ", job.displayName);
                     callback(null, statistic);
-                }).fail(function (err) {
-                    log.error("Coverage processor: failed to save coverage statistic for job ", job.displayName);
-                    callback(err);
+                }).fail(function (reason) {
+                    procLog.error("Failed to save coverage statistic for job ", job.displayName);
+                    callback(reason);
                 });
 
-            }).fail(function(err){
-                log.error("Coverage processor: failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, ")");
-                callback(err);
+            }).fail(function(reason){
+                procLog.error("Failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, ")");
+                callback(reason);
             });
-        }).fail(function(err){
-            log.error(err);
-            callback(err);
         });
-
     }
 };
