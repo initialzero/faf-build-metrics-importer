@@ -171,15 +171,13 @@ module.exports = {
         });
     },
 
-    run: function (job, build) {
-
-        var dfr = new Deferred();
+    run: function (job, build, callback) {
 
         log.info("Coverage processor: checking job: ", job.displayName);
 
         getCoverageXMLFile(job, build).fail(function (reason) {
             log.info("Coverage processor: failed to get XML for job ", job.displayName, ". Reason: ", reason);
-            dfr.reject(reason);
+            callback(reason);
         }).done(function (xmlCoverageFileContent) {
 
             log.info("Coverage processor: Got XMl file from buildmater for job ", job.displayName);
@@ -205,18 +203,20 @@ module.exports = {
                     statistic.linesCovered
                 ]).done(function () {
                     log.info("Coverage processor: saved coverage statistic for job ", job.displayName);
-                    dfr.resolve(statistic);
-                }).fail(function () {
+                    callback(null, statistic);
+                }).fail(function (err) {
                     log.error("Coverage processor: failed to save coverage statistic for job ", job.displayName);
-                    dfr.reject();
+                    callback(err);
                 });
 
-            }).fail(function(){
+            }).fail(function(err){
                 log.error("Coverage processor: failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, ")");
-                dfr.reject();
+                callback(err);
             });
+        }).fail(function(err){
+            log.error(err);
+            callback(err);
         });
 
-        return dfr;
     }
 };
