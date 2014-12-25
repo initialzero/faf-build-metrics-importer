@@ -1,0 +1,13 @@
+
+module.exports = {
+
+    init: function(doneCallbackFunc) {
+
+        // call function 'doneCallbackFunc' after you finish everything you need to be done with initialization
+    },
+
+    run: function(job, build, callback) {
+
+        // call the 'callback' function once you finished here
+    }
+};

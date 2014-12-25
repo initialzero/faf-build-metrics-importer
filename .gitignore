@@ -1,6 +1,4 @@
+faf-build-metrics-importer.log
 node_modules
 .idea
 config/default.json
-components/components.iml
-config/config.iml
-processors/processors.iml

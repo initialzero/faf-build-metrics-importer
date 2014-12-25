@@ -82,29 +82,26 @@ If you need to remove it from the launch list, you can use next command:
 update-rc.d -f faf-build-metrics-importer remove
 ```
 
-Reports... what is this ?
+Processor
 ==================
-Report is a ....
+Processor in terms of this application is a kind of a plugin which can be executed while recessing each CI job.
+What does it mean ? Let's say there is a **processor** added bu someone.
+So, at some moment application will call this **processor** with parameters **job** and **build**  which will describe the
+CI Job and the current build information of this job.
+And the **processor** can do any actions it wants on this job.
 
-How to add report
+Seems easy, right ?
+
+Now, let's see how to add such processors
+
+How to add a processor
 ==================
-- put file to folder "processors" 
-`processors/newReport.js`
-- create function which get, process and save data to database
-
+1\. Copy an empty skeleton of processor and name it like you want, for example:
 ```
-var pg = require("../components/pg"); // Use postres module.
-
-module.exports = function(job, build, callback) {
-    // do all staff
-    
-    var reportData = "some report data";
-    
-    pg.doQuery("INSERT INTO new_report_table VALUES ($1, $2, $3)", [job.id, build.number, reportData], callback)
-}
+cp processors/skeleton.js.example processors/myProcessor.js
 ```
 
-
+2\. Modify the processor like you want...
 
 
 postres module
@@ -127,6 +124,7 @@ pg.doQueryStack(queryArray, callback);
 
 TODO
 =============
+- there is a file **config/update_job_names.sql** which if not used anywhere...
 - redesign db
 - refactor pg module, add getBuildId, getJobId
 - memory usage
