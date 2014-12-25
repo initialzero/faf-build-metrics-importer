@@ -184,15 +184,13 @@ module.exports = {
 
                 var sql =
                     "INSERT INTO faf_metrics_build_coverage (" +
-                        "id, " +
                         "build_id, " +
                         "functionsCovered, " +
                         "branchesCovered, " +
                         "linesCovered) " +
-                    "VALUES ($1, $2, $3, $4, $5)";
+                    "VALUES ($1, $2, $3, $4)";
 
                 pgClient.doQuery(sql, [
-                    job.id,
                     build.build_id,
                     statistic.functionsCovered,
                     statistic.branchesCovered,

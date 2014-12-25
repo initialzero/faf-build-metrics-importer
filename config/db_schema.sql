@@ -69,31 +69,11 @@ ALTER SEQUENCE faf_metrics_build_build_id_seq OWNED BY faf_metrics_build.build_i
 --
 
 CREATE TABLE faf_metrics_build_coverage (
-    id integer NOT NULL,
     build_id integer NOT NULL,
     functionscovered double precision,
     branchescovered double precision,
     linescovered double precision
 );
-
-
---
--- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE faf_metrics_build_coverage_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE faf_metrics_build_coverage_id_seq OWNED BY faf_metrics_build_coverage.id;
 
 
 --
@@ -200,13 +180,6 @@ ALTER TABLE ONLY faf_metrics_build ALTER COLUMN build_id SET DEFAULT nextval('fa
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY faf_metrics_build_coverage ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_coverage_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
 ALTER TABLE ONLY faf_metrics_build_size ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_size_id_seq'::regclass);
 
 
@@ -243,15 +216,8 @@ SELECT pg_catalog.setval('faf_metrics_build_build_id_seq', 1, false);
 -- Data for Name: faf_metrics_build_coverage; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY faf_metrics_build_coverage (id, build_id, functionscovered, branchescovered, linescovered) FROM stdin;
+COPY faf_metrics_build_coverage (build_id, functionscovered, branchescovered, linescovered) FROM stdin;
 \.
-
-
---
--- Name: faf_metrics_build_coverage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('faf_metrics_build_coverage_id_seq', 1, false);
 
 
 --
@@ -300,11 +266,11 @@ SELECT pg_catalog.setval('faf_metrics_jenkins_jobs_job_id_seq', 1, false);
 
 
 --
--- Name: faf_metrics_build_coverage_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: faf_metrics_build_coverage_build_id_key; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
 ALTER TABLE ONLY faf_metrics_build_coverage
-    ADD CONSTRAINT faf_metrics_build_coverage_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT faf_metrics_build_coverage_build_id_key UNIQUE (build_id);
 
 
 --
