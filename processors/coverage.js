@@ -77,8 +77,8 @@ function getStatisticFromXML(xmlData) {
             });
         });
 
-        //console.log("Methods: ", totalHittedMethods, "of", totalMethods, ", rate is: ", totalHittedMethods / totalMethods);
-        //console.log("Lines: ", totalHittedLines, "of", totalLines, ", rate is: ", totalHittedLines / totalLines);
+        //logFlow.info("Methods: ", totalHittedMethods, "of", totalMethods, ", rate is: ", totalHittedMethods / totalMethods);
+        //logFlow.info("Lines: ", totalHittedLines, "of", totalLines, ", rate is: ", totalHittedLines / totalLines);
 
         myStat.functionsCovered = totalHittedMethods / totalMethods;
         myStat.linesCovered = totalHittedLines / totalLines;
@@ -107,7 +107,6 @@ function getCoverageXMLFile(job) {
 
         dfr.reject("Failed to load XML file from a job. The reason is: " + reason);
     });
-    //content = require("fs").readFileSync("/home/bazil/w/faf-build-metrics-importer/new/xml/cobertura-coverage.xml");
 
     return dfr;
 }
@@ -172,21 +171,27 @@ module.exports = {
         });
     },
 
-    process: function (job, build) {
+    run: function (job, build) {
 
         var dfr = new Deferred();
 
+        logFlow.info("Coverage processor: checking job: ", job.displayName);
+
         getCoverageXMLFile(job, build).fail(function (reason) {
+            logFlow.info("Coverage processor: failed to get XML for job ", job.displayName, ". Reason: ", reason);
             dfr.reject(reason);
         }).done(function (xmlCoverageFileContent) {
 
+            logFlow.info("Coverage processor: Got XMl file from buildmater for job ", job.displayName);
+
             getStatisticFromXML(xmlCoverageFileContent).done(function (statistic) {
 
+                logFlow.info("Coverage processor: got coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, "), saving it ...");
+
                 var sql =
-                    "INSERT INTO " +
-                    "faf_metrics_build_coverage (" +
-                        "job_id, " +
-                        "build, " +
+                    "INSERT INTO faf_metrics_build_coverage (" +
+                        "id, " +
+                        "build_id, " +
                         "functionsCovered, " +
                         "branchesCovered, " +
                         "linesCovered) " +
@@ -199,9 +204,17 @@ module.exports = {
                     statistic.branchesCovered,
                     statistic.linesCovered
                 ]).done(function () {
+                    logFlow.info("Coverage processor: saved coverage statistic for job ", job.displayName);
                     dfr.resolve(statistic);
+                }).fail(function () {
+                    logFlow.error("Coverage processor: failed to save coverage statistic for job ", job.displayName);
+                    dfr.reject();
                 });
-            })
+
+            }).fail(function(){
+                logFlow.error("Coverage processor: failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.displayName, ")");
+                dfr.reject();
+            });
         });
 
         return dfr;
