@@ -62,6 +62,9 @@ function checkCIJobs() {
 
         // build the list of jobs
         jobs.forEach(function(job) {
+
+            log.debug("Building task list for job ", job.name);
+
             // ignore some jobs which are not faf modules
             if (conf.jenkins.ignore.indexOf(job.name) > -1) {
                 return;
