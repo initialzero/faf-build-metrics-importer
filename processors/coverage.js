@@ -5,7 +5,6 @@ var conf = require("config").get("conf"),
     Deferred = require("Deferred"),
     pgClient = require("../components/pgClient");
 
-//log4js.configure(conf.log4js);
 var procLog = log4js.getLogger("coverageProcessor");
 
 function buildJenkinsUrl(job, path) {

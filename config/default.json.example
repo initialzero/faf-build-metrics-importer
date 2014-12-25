@@ -9,7 +9,8 @@
         "flow": "info",
         "main": "error",
         "coverageProcessor": "error",
-        "timeProcessor": "error"
+        "timeProcessor": "error",
+        "sizeProcessor": "error"
       }
     },
     "interval": 300000,

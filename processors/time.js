@@ -6,7 +6,6 @@ var conf = require("config").get("conf"),
         "build_id, task_name, task_time" +
         ") VALUES ($1, $2, $3)";
 
-//log4js.configure(conf.log4js);
 var procLog = log4js.getLogger("timeProcessor");
 
 function buildJenkinsUrl(job, path) {
