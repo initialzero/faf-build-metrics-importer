@@ -1,5 +1,4 @@
 var conf = require("config").get("conf"),
-    http = require('http'),
     async = require("async"),
     log4js = require('log4js'),
     jenkins = require("./components/jenkins"),
@@ -21,11 +20,6 @@ pgClient.init().fail(function() {
 
     lastBuildInfo = info;
     logFlow.info("Last build info: ", lastBuildInfo);
-
-    http.createServer(function(req, res) {
-        res.end("<pre>" + JSON.stringify(lastBuildInfo, null, " ") + "</pre>");
-    }).listen(8085);
-    logFlow.info("Http server started at localhost:8085");
 
     logFlow.info("Going to initialize processors...");
 
@@ -88,8 +82,8 @@ function finish(err, res) {
     err && log.error(err);
     logFlow.info("Finish");
 
-    logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
-    setTimeout(checkCIJobs, conf.interval);
+    logFlow.info("All done.");
+    process.exit();
 }
 
 function jobFlow(job, callback) {
