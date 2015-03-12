@@ -52,10 +52,7 @@ function checkCIJobs() {
 
         log.error("Failed to get list of jobs on CI. Reason is: ", reason);
 
-        // maybe it was a temporary error ? let's make another request later
-        logFlow.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
-        setTimeout(checkCIJobs, conf.interval);
-
+        process.exit(1);
     }).done(function(res) {
 
         var stack = [],
