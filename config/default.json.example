@@ -22,6 +22,7 @@
         "^module-*"
       ],
       "exclude": [
+        "^faf-metrix$"
       ]
     },
     "pg": {
