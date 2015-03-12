@@ -4,7 +4,14 @@ var conf = require("config").get("conf"),
     jenkins = require("./components/jenkins"),
     pgClient = require("./components/pgClient"),
     processorsHeap = require("./processors/index"),
-    lastBuildInfo = {};
+
+    lastBuildInfo = {},
+    includeRegex = new RegExp(conf.jenkins.include.join("|"), "i"),
+    excludeRegex;
+
+if (conf.jenkins.exclude && conf.jenkins.exclude.length) {
+    excludeRegex = new RegExp(conf.jenkins.exclude.join("|"), "i")
+}
 
 log4js.configure(conf.log4js);
 var log = log4js.getLogger("main"),
@@ -67,9 +74,13 @@ function checkCIJobs() {
             logFlow.debug("Building task list for job ", job.name);
 
             // ignore some jobs which are not faf modules
-            if (conf.jenkins.ignore.indexOf(job.name) > -1) {
+            if (job.name.match(includeRegex) === null) {
                 return;
             }
+            if (excludeRegex && job.name.match(excludeRegex) !== null) {
+                return;
+            }
+
             stack.push(async.apply(jobFlow, job));
         });
 
