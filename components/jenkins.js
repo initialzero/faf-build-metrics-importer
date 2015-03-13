@@ -1,15 +1,18 @@
 var conf = require("config").get("conf"),
     Deferred = require('Deferred'),
-    request = require('request');
+    request = require('request'),
+    argv = require("optimist").argv;
 
 function buildJenkinsUrl(job, build) {
+    var user = argv.u || conf.jenkins["usr"];
+    var pwd = argv.p || conf.jenkins["pwd"];
 
     var url = "http://";
 
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
+    if (user) {
+        url = url + user;
+        if (pwd) {
+            url = url + ":" + pwd;
         }
         url = url + "@";
     }

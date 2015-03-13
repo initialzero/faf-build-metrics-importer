@@ -1,11 +1,17 @@
 var conf = require("config").get("conf"),
-    http = require('http'),
     async = require("async"),
     log4js = require('log4js'),
     jenkins = require("./components/jenkins"),
     pgClient = require("./components/pgClient"),
     processorsHeap = require("./processors/index"),
-    lastBuildInfo = {};
+
+    lastBuildInfo = {},
+    includeRegex = new RegExp(conf.jenkins.include.join("|"), "i"),
+    excludeRegex;
+
+if (conf.jenkins.exclude && conf.jenkins.exclude.length) {
+    excludeRegex = new RegExp(conf.jenkins.exclude.join("|"), "i")
+}
 
 log4js.configure(conf.log4js);
 var log = log4js.getLogger("main"),
@@ -21,11 +27,6 @@ pgClient.init().fail(function() {
 
     lastBuildInfo = info;
     logFlow.info("Last build info: ", lastBuildInfo);
-
-    http.createServer(function(req, res) {
-        res.end("<pre>" + JSON.stringify(lastBuildInfo, null, " ") + "</pre>");
-    }).listen(8085);
-    logFlow.info("Http server started at localhost:8085");
 
     logFlow.info("Going to initialize processors...");
 
@@ -51,10 +52,7 @@ function checkCIJobs() {
 
         log.error("Failed to get list of jobs on CI. Reason is: ", reason);
 
-        // maybe it was a temporary error ? let's make another request later
-        logFlow.info("Sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
-        setTimeout(checkCIJobs, conf.interval);
-
+        process.exit(1);
     }).done(function(res) {
 
         var stack = [],
@@ -73,9 +71,13 @@ function checkCIJobs() {
             logFlow.debug("Building task list for job ", job.name);
 
             // ignore some jobs which are not faf modules
-            if (conf.jenkins.ignore.indexOf(job.name) > -1) {
+            if (job.name.match(includeRegex) === null) {
                 return;
             }
+            if (excludeRegex && job.name.match(excludeRegex) !== null) {
+                return;
+            }
+
             stack.push(async.apply(jobFlow, job));
         });
 
@@ -88,8 +90,8 @@ function finish(err, res) {
     err && log.error(err);
     logFlow.info("Finish");
 
-    logFlow.info("All done, sleeping for " + (parseInt(conf.interval) / 1000) + " seconds before next circle of checking...");
-    setTimeout(checkCIJobs, conf.interval);
+    logFlow.info("All done.");
+    process.exit();
 }
 
 function jobFlow(job, callback) {

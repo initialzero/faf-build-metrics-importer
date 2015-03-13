@@ -18,9 +18,11 @@
       "usr": "",
       "pwd": "",
       "url": "build-master-fafj.jaspersoft.com",
-      "ignore": [
-        "qa-visualize",
-        "env-backup-jenkins"
+      "include": [
+        "^module-*"
+      ],
+      "exclude": [
+        "^faf-metrix$"
       ]
     },
     "pg": {

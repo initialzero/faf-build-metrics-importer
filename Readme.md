@@ -54,9 +54,12 @@ $ node ./main.js
 ```
 Looks fine ! So, now it's time to put this command to some bash script and daemonize it.
 
+#### credentials as command line arguments
+credentials for jenkins can be provided as arguments:
+`node ./main.js -u username -p password`
 
-#### check it's online
-goto `http://<url>:8085` - you should see last checked builds for jobs
+#### log server
+goto `http://<url>:8085` - you will see log output
 
 Making it Daemon
 =======
