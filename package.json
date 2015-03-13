@@ -17,7 +17,8 @@
     "async": "~0.9.0",
     "log4js": "~0.6.21",
     "Deferred": "latest",
-    "xml2js": "latest"
+    "xml2js": "latest",
+    "optimist": "0.6.1"
   },
   "devDependencies": {
   },
