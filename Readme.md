@@ -40,8 +40,12 @@ Usage
 
 The tool can be run via **main.js** script. The main idea behind script is ***checking new information from Jenkins***. Thus, it means what **main.js** should be launched as a daemon.
 
+**Accepts argument `--job=<job name>` ** for run script only for specified job
+
 For the test run you can type next command:
 ```
+node ./main --job <job-name>
+// or
 node ./main.js
 ```
 the sample output can be like this one:

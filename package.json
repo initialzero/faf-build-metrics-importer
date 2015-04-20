@@ -1,6 +1,6 @@
 {
   "name": "faf-build-metrics-importer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Tool for import, parse and put to DB FAF build data",
   "author": "zigfred",
   "files": [

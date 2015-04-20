@@ -1,4 +1,5 @@
 var conf = require("config").get("conf"),
+    argv = require('optimist').argv,
     async = require("async"),
     log4js = require('log4js'),
     jenkins = require("./components/jenkins"),
@@ -36,10 +37,13 @@ pgClient.init().fail(function() {
         // ok great, everything is done, let's proceed
         logFlow.info("Processors have been initialized, so let's continue");
 
-        logFlow.info("Start checking CI jobs...");
-
-        checkCIJobs();
-
+        if (argv.job) {
+            logFlow.info("Job name received, run import for: " + argv.job);
+            jobFlow(argv.job, finish);
+        } else {
+            logFlow.info("Start checking CI jobs...");
+            checkCIJobs();
+        }
     });
 });
 
@@ -78,7 +82,7 @@ function checkCIJobs() {
                 return;
             }
 
-            stack.push(async.apply(jobFlow, job));
+            stack.push(async.apply(jobFlow, job.name));
         });
 
         // run them in parallel
@@ -87,17 +91,17 @@ function checkCIJobs() {
 }
 
 function finish(err, res) {
-    err && log.error(err);
+    err && log.error(err, res);
     logFlow.info("Finish");
 
     logFlow.info("All done.");
     process.exit();
 }
 
-function jobFlow(job, callback) {
+function jobFlow(jobName, callback) {
     log.debug("Flow start");
     async.auto({
-        getJobInfo: getJobInfo(job.name),
+        getJobInfo: getJobInfo(jobName),
         getLastBuildInfo: ["getJobInfo", getLastBuildInfo],
         saveJobInDb: ["getJobInfo", saveJobInDb],
         saveBuildInDb: ["saveJobInDb", "getLastBuildInfo", saveBuildInDb],
