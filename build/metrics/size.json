@@ -1,0 +1,30 @@
+[
+  {
+    "name": "overlay",
+    "size": 31561358
+  },
+  {
+    "name": "jasper.js",
+    "size": 675186
+  },
+  {
+    "name": "commons.main.js",
+    "size": 1946522
+  },
+  {
+    "name": "dataSource/addDataSourcePage.js",
+    "size": 2563442
+  },
+  {
+    "name": "addDataType.page.js",
+    "size": 1968949
+  },
+  {
+    "name": "addFileResource.page.js",
+    "size": 2086970
+  },
+  {
+    "name": "addInputControl.page.js",
+    "size": 1964712
+  }
+]
