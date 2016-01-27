@@ -1,5 +1,6 @@
 var conf = require("config").get("conf"),
     log4js = require('log4js'),
+    fs = require('fs'),
     request = require("request"),
     pgClient = require("../components/pgClient"),
     query = "INSERT INTO faf_metrics_build_time (" +
@@ -8,32 +9,13 @@ var conf = require("config").get("conf"),
 
 var procLog = log4js.getLogger("timeProcessor");
 
-function buildJenkinsUrl(job, path) {
-
-    var url = "http://";
-
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
-        }
-        url = url + "@";
-    }
-
-    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
-
-    return  url;
-}
-
 module.exports = {
 
     run: function(job, build, callback) {
 
-        var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/time.json");
-
         procLog.debug("checking job: ", job.name);
 
-        request(urlToQueryJenkins, function(error, response, body) {
+        fs.readFile("build/metrics/time.json", 'utf8', function(error, response, body) {
             if (error || response.statusCode !== 200) {
                 procLog.warn("Failed to get timing data for job: ", job.name);
                 callback(null, error || "responce: " + response.statusCode);
