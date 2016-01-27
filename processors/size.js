@@ -9,23 +9,6 @@ var fs = require("fs"),
 
 var procLog = log4js.getLogger("sizeProcessor");
 
-function buildJenkinsUrl(job, path) {
-
-    var url = "http://";
-
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
-        }
-        url = url + "@";
-    }
-
-    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
-
-    return  url;
-}
-
 module.exports = {
 
     init: function(doneCallbackFunc) {
@@ -47,10 +30,9 @@ module.exports = {
     },
 
     run: function(job, build, callback) {
-        var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/size.json");
         procLog.debug("checking job: ", job.name);
 
-        request(urlToQueryJenkins, function(error, response, body) {
+        fs.readFile("build/metrics/size.json", "ascii", function(error, response, body) {
             if (error || response.statusCode !== 200) {
                 procLog.warn("Failed to get data for job: ", job.name);
                 callback(null, error || "responce: " + response.statusCode);
