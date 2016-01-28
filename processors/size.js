@@ -32,10 +32,10 @@ module.exports = {
     run: function(job, build, callback) {
         procLog.debug("checking job: ", job.name);
 
-        fs.readFile("build/metrics/size.json", "ascii", function(error, response, body) {
-            if (error || response.statusCode !== 200) {
+        fs.readFile("build/metrics/size.json", "ascii", function(error, body) {
+            if (error ) {
                 procLog.warn("Failed to get data for job: ", job.name);
-                callback(null, error || "responce: " + response.statusCode);
+                callback(null, error);
                 return;
             }
 
