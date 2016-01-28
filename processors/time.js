@@ -15,10 +15,10 @@ module.exports = {
 
         procLog.debug("checking job: ", job.name);
 
-        fs.readFile("build/metrics/time.json", 'utf8', function(error, response, body) {
-            if (error || response.statusCode !== 200) {
+        fs.readFile("build/metrics/time.json", 'utf8', function(error,  body) {
+            if (error) {
                 procLog.warn("Failed to get timing data for job: ", job.name);
-                callback(null, error || "responce: " + response.statusCode);
+                callback(null, error);
                 return;
             }
 
