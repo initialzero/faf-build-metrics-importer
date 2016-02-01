@@ -162,7 +162,7 @@ function doQuery (query, params, silent) {
     pgConnection.query(query, params, function(err, result) {
         if (err) {
             if (!silent) {
-                logFlow.error("Failed to make a request: '" + query + "'. The reason is: ", err);
+                logFlow.error("Failed to make a request: '" + query + "', with params: '" + params + "'. The reason is: ", err);
             }
             dfr.reject();
             return;
@@ -174,21 +174,23 @@ function doQuery (query, params, silent) {
 
 function doQueryStack(queryArr) {
     var dfr = new Deferred();
-    async.each(queryArr, function(query, callback) {
-        doQuery(
-            query[0],
-            query[1]
-        ).done(function(res) {
-            callback(null, res);
-        }).fail(function(err) {
-            callback(err);
+    connect().done(function () {
+        async.each(queryArr, function(query, callback) {
+            doQuery(
+                query[0],
+                query[1]
+            ).done(function(res) {
+                    callback(null, res);
+                }).fail(function(err) {
+                    callback(err);
+                });
+        }, function(err, res) {
+            if (err) {
+                dfr.reject(err);
+            } else {
+                dfr.resolve(res);
+            }
         });
-    }, function(err, res) {
-        if (err) {
-            dfr.reject(err);
-        } else {
-            dfr.resolve(res);
-        }
     });
 
     return dfr;

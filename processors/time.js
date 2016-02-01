@@ -15,7 +15,7 @@ module.exports = {
 
         procLog.debug("checking job: ", job.name);
 
-        fs.readFile("build/metrics/time.json", 'utf8', function(error,  body) {
+        fs.readFile("build/metrics/time.json", "ascii", function(error,  body) {
             if (error) {
                 procLog.warn("Failed to get timing data for job: ", job.name);
                 callback(null, error);
@@ -47,16 +47,18 @@ module.exports = {
                 procLog.debug("Going to save timing data for job: ", job.name);
 
                 pgClient.doQueryStack(queryArr).done(function(res) {
+                    console.log("done");
                     procLog.debug("Saved timing data for job: ", job.name);
                     callback(null, {time: data.length});
                 }).fail(function(err){
+                    console.log("fail");
                     procLog.error("Failed to save timing data for job: ", job.name);
                     callback(err);
                 });
 
             } catch (e) {
                 procLog.warn("Failed to get timing data for job: ", job.name);
-                callback(error);
+                callback(e);
             }
         });
     }
