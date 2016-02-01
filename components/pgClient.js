@@ -174,23 +174,21 @@ function doQuery (query, params, silent) {
 
 function doQueryStack(queryArr) {
     var dfr = new Deferred();
-    connect().done(function () {
-        async.each(queryArr, function(query, callback) {
-            doQuery(
-                query[0],
-                query[1]
-            ).done(function(res) {
-                    callback(null, res);
-                }).fail(function(err) {
-                    callback(err);
-                });
-        }, function(err, res) {
-            if (err) {
-                dfr.reject(err);
-            } else {
-                dfr.resolve(res);
-            }
-        });
+    async.each(queryArr, function(query, callback) {
+        doQuery(
+            query[0],
+            query[1]
+        ).done(function(res) {
+                callback(null, res);
+            }).fail(function(err) {
+                callback(err);
+            });
+    }, function(err, res) {
+        if (err) {
+            dfr.reject(err);
+        } else {
+            dfr.resolve(res);
+        }
     });
 
     return dfr;
