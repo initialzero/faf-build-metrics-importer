@@ -9,23 +9,6 @@ var fs = require("fs"),
 
 var procLog = log4js.getLogger("sizeProcessor");
 
-function buildJenkinsUrl(job, path) {
-
-    var url = "http://";
-
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
-        }
-        url = url + "@";
-    }
-
-    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
-
-    return  url;
-}
-
 module.exports = {
 
     init: function(doneCallbackFunc) {
@@ -47,13 +30,12 @@ module.exports = {
     },
 
     run: function(job, build, callback) {
-        var urlToQueryJenkins = buildJenkinsUrl(job.name, "build/metrics/size.json");
         procLog.debug("checking job: ", job.name);
 
-        request(urlToQueryJenkins, function(error, response, body) {
-            if (error || response.statusCode !== 200) {
+        fs.readFile("build/metrics/size.json", "ascii", function(error, body) {
+            if (error ) {
                 procLog.warn("Failed to get data for job: ", job.name);
-                callback(null, error || "responce: " + response.statusCode);
+                callback(null, error);
                 return;
             }
 
@@ -71,7 +53,7 @@ module.exports = {
                     queryArr.push([query, [build.build_id, item.name, item.size]]);
                 });
 
-                procLog.debug("Going to save data for job: ", job.name);
+                procLog.debug("Going to save data for job: ", job.name, queryArr);
 
                 pgClient.doQueryStack(queryArr).done(function(res) {
                     procLog.debug("Saved data for job: ", job.name);
@@ -83,7 +65,7 @@ module.exports = {
 
             } catch (e) {
                 procLog.warn("Failed to get data for job: ", job.name);
-                callback(error);
+                callback(e);
             }
         });
 
