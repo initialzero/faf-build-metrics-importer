@@ -46,14 +46,14 @@ module.exports = {
             try {
                 data = JSON.parse(body);
 
-                procLog.debug("Got data for job: ", job.name, queryArr);
+                procLog.debug("Got data for job: ", job.name);
 
 
                 data.forEach(function(item) {
                     queryArr.push([query, [build.build_id, item.name, item.size]]);
                 });
 
-                procLog.debug("Going to save data for job: ", job.name);
+                procLog.debug("Going to save data for job: ", job.name, queryArr);
 
                 pgClient.doQueryStack(queryArr).done(function(res) {
                     procLog.debug("Saved data for job: ", job.name);
