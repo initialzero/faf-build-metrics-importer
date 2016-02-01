@@ -46,7 +46,7 @@ module.exports = {
             try {
                 data = JSON.parse(body);
 
-                procLog.debug("Got data for job: ", job.name);
+                procLog.debug("Got data for job: ", job.name, queryArr);
 
 
                 data.forEach(function(item) {
@@ -65,7 +65,7 @@ module.exports = {
 
             } catch (e) {
                 procLog.warn("Failed to get data for job: ", job.name);
-                callback(error);
+                callback(e);
             }
         });
 

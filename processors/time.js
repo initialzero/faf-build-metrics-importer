@@ -44,7 +44,7 @@ module.exports = {
                     queryArr.push([query, [build.build_id, key, processed[key]]]);
                 });
 
-                procLog.debug("Going to save timing data for job: ", job.name, [build.build_id, key, processed[key]]);
+                procLog.debug("Going to save timing data for job: ", job.name, queryArr);
 
                 pgClient.doQueryStack(queryArr).done(function(res) {
                     procLog.debug("Saved timing data for job: ", job.name);
@@ -56,7 +56,7 @@ module.exports = {
 
             } catch (e) {
                 procLog.warn("Failed to get timing data for job: ", job.name);
-                callback(error);
+                callback(e);
             }
         });
     }
