@@ -79,6 +79,9 @@ function getCoverageXMLFile(job) {
         if (!error) {
             dfr.resolve(body);
             return;
+        } else {
+            procLog.warn("Failed to get data for job: ", job.name);
+            dfr.reject("Failed to load XML file from a job. " + error);
         }
     });
 
