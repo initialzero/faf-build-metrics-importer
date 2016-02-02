@@ -5,9 +5,9 @@
 
 var time = require('./processors/time.js'),
     size = require('./processors/size.js'),
-    coverage = require('./processors/size.js');
+    coverage = require('./processors/coverage.js');
 
-time.run({name: "test"}, {build_id: 1}, function(res, err) {
+time.run({name: "test-time"}, {build_id: 1}, function(res, err) {
     console.log(res);
     console.log(err);
 });
