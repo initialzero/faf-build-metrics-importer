@@ -3,26 +3,10 @@ var conf = require("config").get("conf"),
     xml2js = require("xml2js"),
     request = require("request"),
     Deferred = require("Deferred"),
+    fs = require("fs"),
     pgClient = require("../components/pgClient");
 
 var procLog = log4js.getLogger("coverageProcessor");
-
-function buildJenkinsUrl(job, path) {
-
-    var url = "http://";
-
-    if (conf.jenkins["usr"]) {
-        url = url + conf.jenkins["usr"];
-        if (conf.jenkins["pwd"]) {
-            url = url + ":" + conf.jenkins["pwd"];
-        }
-        url = url + "@";
-    }
-
-    url = url + conf.jenkins["url"] + "/job/" + job + "/ws/" + path;
-
-    return  url;
-}
 
 function getStatisticFromXML(xmlData) {
 
@@ -91,20 +75,11 @@ function getStatisticFromXML(xmlData) {
 function getCoverageXMLFile(job) {
     var dfr = new Deferred();
 
-    var urlToQueryJenkins = buildJenkinsUrl(job.name, "test/karma-coverage/coverage/PhantomJS%201.9.8%20%28Linux%29/cobertura-coverage.xml");
-
-    request(urlToQueryJenkins, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
+    fs.readFile("build/metrics/cobertura-coverage.xml", "ascii", function(error, body) {
+        if (!error) {
             dfr.resolve(body);
             return;
         }
-
-        var reason = "unknown reason (http code is: " + response.statusCode + ")";
-        if (response.statusCode == 404) {
-            reason = "resource not found (404)";
-        }
-
-        dfr.reject("Failed to load XML file from a job. The reason is: " + reason);
     });
 
     return dfr;
@@ -204,7 +179,7 @@ module.exports = {
                 });
 
             }).fail(function(err){
-                procLog.error("Failed to get coverage statistic from XML file: ", statistic, " (job name is: ", job.name, ")");
+                procLog.error("Failed to get coverage statistic from XML file, (job name is: ", job.name, ")");
                 callback(err);
             });
         }).fail(function (reason) {
