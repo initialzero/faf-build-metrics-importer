@@ -94,10 +94,10 @@ module.exports = {
         return dfr;
     },
 
-    saveJob: function(job, callback) {
-        getJobId(job.name, function(err, jobId){
+    saveJob: function(jobName, callback) {
+        getJobId(jobName, function(err, jobId){
             if (!jobId && !err) {
-                insertJob(job.name, function(err, jobId) {
+                insertJob(jobName, function(err, jobId) {
                     callback(err, jobId);
                 });
             } else {
