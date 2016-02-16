@@ -34,9 +34,9 @@ pgClient.init().fail(function() {
 
         if (argv.job) {
             logFlow.info("Job name received, run import for: " + argv.job);
-            jobFlow(argv.job, argv.build_id, finish);
+            jobFlow(argv.job, argv.build, argv.started, argv.started_by, argv.result, argv.change_set, finish);
         } else {
-            logFlow.info("Start checking CI jobs...");
+            logFlow.info("Please run with arguments");
         }
     });
 });
@@ -51,11 +51,11 @@ function finish(err, res) {
     process.exit();
 }
 
-function jobFlow(jobName, build_id, callback) {
+function jobFlow(jobName, build_id, started, started_by,result, change_set, callback) {
     log.debug("Flow start");
     async.auto({
         saveJobInDb: saveJobInDb(jobName),
-        saveBuildInDb: ["saveJobInDb", saveBuildInDb(build_id)],
+        saveBuildInDb: ["saveJobInDb", saveBuildInDb(build_id, started, started_by, result, change_set)],
         processReports: ["saveJobInDb", "saveBuildInDb", processReports]
     }, function(err, res) {
         callback(err, res)
@@ -70,7 +70,7 @@ function saveJobInDb (jobName) {
 
         log.debug("saveJobInDb. Job:", jobName);
 
-        pgClient.saveJob(job, function(err, job_id) {
+        pgClient.saveJob(job.name, function(err, job_id) {
             job.id = job_id;
             callback(err, job);
         });
@@ -79,11 +79,16 @@ function saveJobInDb (jobName) {
 
 
 
-function saveBuildInDb (build_id) {
+function saveBuildInDb (build_id, started, started_by, result, change_set) {
     return function (callback, results) {
         var job = results.saveJobInDb,
             build = {
-                id: build_id
+                id: build_id,
+                number: build_id,
+                timestamp:  started,
+                startedBy:  started_by,
+                result: result,
+                changeSet: change_set
             };
 
         if (!job || !build || build.building) {
@@ -101,6 +106,7 @@ function saveBuildInDb (build_id) {
             callback(null, build);
         });
     }
+
 }
 
 function processReports(callback, results) {
