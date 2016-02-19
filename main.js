@@ -91,7 +91,7 @@ function saveBuildInDb (build_id, started, started_by, result, change_set) {
                 changeSet: change_set
             };
 
-        if (!job || !build || build.building) {
+        if (!job || !build) {
             return callback();
         }
 
