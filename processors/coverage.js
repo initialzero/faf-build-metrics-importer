@@ -90,64 +90,6 @@ function getCoverageXMLFile(job) {
 
 module.exports = {
 
-    init: function(doneCallbackFunc) {
-
-        pgClient.doQuery("SELECT * FROM faf_metrics_build_coverage LIMIT 1", [], true).fail(function () {
-
-            // There is no table which needed for this module, so let's create it...
-            procLog.info("Creating a table for 'faf_metrics_build_coverage' processor");
-
-            var createTableSQL = "CREATE TABLE faf_metrics_build_coverage ("+
-                "id integer NOT NULL," +
-                "build_id integer NOT NULL," +
-                "functionsCovered float," +
-                "branchesCovered float," +
-                "linesCovered float)";
-
-            pgClient.doQuery(createTableSQL, []).fail(function () {
-
-                procLog.error("Failed to initialize module 'coverage': can't create table 'faf_metrics_build_coverage'");
-                doneCallbackFunc();
-
-            }).done(function(){
-
-                var sql;
-
-                // creating sequence
-                sql = "CREATE SEQUENCE faf_metrics_build_coverage_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1";
-                pgClient.doQuery(sql, []);
-
-                // and attaching it to the table
-                sql = "ALTER SEQUENCE faf_metrics_build_coverage_id_seq OWNED BY faf_metrics_build_coverage.id";
-                pgClient.doQuery(sql, []);
-
-                // setting initial value of the id value
-                sql = "ALTER TABLE ONLY faf_metrics_build_coverage ALTER COLUMN id SET DEFAULT nextval('faf_metrics_build_coverage_id_seq'::regclass)";
-                pgClient.doQuery(sql, []);
-
-                // registering sequence
-                sql = "SELECT pg_catalog.setval('faf_metrics_build_coverage_id_seq', 1, false)";
-                pgClient.doQuery(sql, []);
-
-                // adding primary key to the table
-                sql = "ALTER TABLE ONLY faf_metrics_build_coverage ADD CONSTRAINT faf_metrics_build_coverage_pkey PRIMARY KEY (id)";
-                pgClient.doQuery(sql, []);
-
-                // adding foreign key to the table to allow cascade removing of data
-                sql = "ALTER TABLE ONLY faf_metrics_build_coverage ADD CONSTRAINT faf_metrics_build_coverage_build_id_fkey FOREIGN KEY (build_id) REFERENCES faf_metrics_build(build_id)";
-                pgClient.doQuery(sql, []);
-
-                // even if we failed to add an index, it doesn't matter so much, I guess
-                // and the error in log file will be enough
-
-                doneCallbackFunc();
-            });
-
-        }).done(function(){
-            doneCallbackFunc();
-        });
-    },
-
     run: function (job, build, callback) {
 
         procLog.debug("Checking job: ", job.name);
@@ -160,26 +102,7 @@ module.exports = {
 
                 procLog.debug("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.name, "), saving it ...");
 
-                var sql =
-                    "INSERT INTO faf_metrics_build_coverage (" +
-                        "build_id, " +
-                        "functionsCovered, " +
-                        "branchesCovered, " +
-                        "linesCovered) " +
-                    "VALUES ($1, $2, $3, $4)";
-
-                pgClient.doQuery(sql, [
-                    build.build_id,
-                    statistic.functionsCovered,
-                    statistic.branchesCovered,
-                    statistic.linesCovered
-                ]).done(function () {
-                    procLog.debug("Saved coverage statistic for job ", job.name);
-                    callback(null, statistic);
-                }).fail(function (err) {
-                    procLog.error("Failed to save coverage statistic for job ", job.name);
-                    callback(err);
-                });
+                pgClient.saveCoverageData(job, build, statistic, callback);
 
             }).fail(function(err){
                 procLog.error("Failed to get coverage statistic from XML file, (job name is: ", job.name, ")");
