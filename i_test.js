@@ -70,55 +70,78 @@ pgClient.init().done(function() {
         }
     ],
         function(err, results){
-            pgClient.doQuery("SELECT * FROM faf_metrics_build LIMIT 1").fail(function(err){
-                console.log(err);
-            }).done(function(data) {
-                assert.equal(data.rows[0].build, 35);
-                assert.equal(data.rows[0].started, 'Thu Nov 19 2015 15:02:06 GMT+0200 (FLE Standard Time)');
-                assert.equal(data.rows[0].result, "SUCCESS");
-                assert.equal(data.rows[0].change_set, '"some text"');
-            });
 
-            pgClient.doQuery("SELECT * FROM faf_metrics_jenkins_jobs LIMIT 1").fail(function(err){
-                console.log(err);
-            }).done(function(data) {
-                assert.equal(data.rows[0].job_name, "module-jrs-ui-pro-trunk-jade-new-css-html");
-                assert.equal(data.rows[0].module, "jrs-ui-pro");
-                assert.equal(data.rows[0].feature, "jade-new-css-html");
-            });
-
-            pgClient.doQuery("SELECT file_name, file_size FROM faf_metrics_build_size").fail(function(err){
-                console.log(err);
-            }).done(function(data) {
-                var dataLength = data.rows.length;
-                assert.equal(dataLength, size.length);
-                for(var i=0; i < dataLength; i++) {
-                    assert.equal(data.rows[i].file_name, size[i].name);
-                    assert.equal(data.rows[i].file_size, size[i].size);
+            async.parallel([
+                    function(callback){
+                        pgClient.doQuery("SELECT * FROM faf_metrics_build LIMIT 1").fail(function(err){
+                            console.log(err);
+                            callback(err);
+                        }).done(function(data) {
+                            assert.equal(data.rows[0].build, 35);
+                            assert.deepEqual(new Date(data.rows[0].started), new Date(1447938126624));
+                            assert.equal(data.rows[0].result, "SUCCESS");
+                            assert.deepEqual(data.rows[0].change_set, '"some text"');
+                            callback();
+                        });
+                    },
+                    function(callback){
+                        pgClient.doQuery("SELECT * FROM faf_metrics_jenkins_jobs LIMIT 1").fail(function(err){
+                            console.log(err);
+                            callback(err);
+                        }).done(function(data) {
+                            assert.equal(data.rows[0].job_name, "module-jrs-ui-pro-trunk-jade-new-css-html");
+                            assert.equal(data.rows[0].module, "jrs-ui-pro");
+                            assert.equal(data.rows[0].feature, "jade-new-css-html");
+                            callback();
+                        });
+                    },
+                    function(callback){
+                        pgClient.doQuery("SELECT file_name, file_size FROM faf_metrics_build_size").fail(function(err){
+                            console.log(err);
+                            callback(err);
+                        }).done(function(data) {
+                            var dataLength = data.rows.length;
+                            assert.equal(dataLength, size.length);
+                            for(var i=0; i < dataLength; i++) {
+                                assert.equal(data.rows[i].file_name, size[i].name);
+                                assert.equal(data.rows[i].file_size, size[i].size);
+                            }
+                            callback();
+                        });
+                    },
+                    function(callback){
+                        pgClient.doQuery("SELECT task_name, task_time FROM faf_metrics_build_time").fail(function(err){
+                            console.log(err);
+                            callback(err);
+                        }).done(function(data) {
+                            var dataLength = data.rows.length;
+                            assert.equal(dataLength, time.length);
+                            for(var i=0; i < dataLength; i++) {
+                                assert.equal(data.rows[i].task_name, time[i][0]);
+                                assert.equal(data.rows[i].task_time, time[i][1]);
+                            }
+                            callback();
+                        });
+                    },
+                    function(callback){
+                        pgClient.doQuery("SELECT functionscovered, branchescovered, linescovered FROM faf_metrics_build_coverage").fail(function(err){
+                            console.log(err);
+                            callback(err);
+                        }).done(function(data) {
+                            var dataLength = data.rows.length;
+                            for(var i=0; i < dataLength; i++) {
+                                assert.equal(data.rows[i].functionscovered.toFixed(9), dataFromXML.functionsCovered.toFixed(9));
+                                assert.equal(data.rows[i].branchescovered.toFixed(4), dataFromXML.branchesCovered.toFixed(4));
+                                assert.equal(data.rows[i].linescovered.toFixed(9), dataFromXML.linesCovered.toFixed(9));
+                            }
+                            callback();
+                        });
+                    }
+                ],
+                function(err, results) {
+                    process.exit();
                 }
-            });
-
-            pgClient.doQuery("SELECT task_name, task_time FROM faf_metrics_build_time").fail(function(err){
-                console.log(err);
-            }).done(function(data) {
-                var dataLength = data.rows.length;
-                assert.equal(dataLength, time.length);
-                for(var i=0; i < dataLength; i++) {
-                    assert.equal(data.rows[i].task_name, time[i][0]);
-                    assert.equal(data.rows[i].task_time, time[i][1]);
-                }
-            });
-
-            pgClient.doQuery("SELECT functionscovered, branchescovered, linescovered FROM faf_metrics_build_coverage").fail(function(err){
-                console.log(err);
-            }).done(function(data) {
-                var dataLength = data.rows.length;
-                for(var i=0; i < dataLength; i++) {
-                    assert.equal(data.rows[i].functionscovered.toFixed(9), dataFromXML.functionsCovered.toFixed(9));
-                    assert.equal(data.rows[i].branchescovered.toFixed(4), dataFromXML.branchesCovered.toFixed(4));
-                    assert.equal(data.rows[i].linescovered.toFixed(9), dataFromXML.linesCovered.toFixed(9));
-                }
-            });
+            );
     });
 });
 
