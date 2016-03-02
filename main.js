@@ -1,5 +1,30 @@
 var conf = require("config").get("conf"),
     argv = require('optimist').argv,
+    yargs = require('yargs')
+        .usage('CLI arguments:')
+        .options({
+            'job_name': {
+                describe: 'text (module-jrs-ui-pro-trunk-jade-new-css-html)'
+            },
+            'build': {
+                describe: 'number (35)'
+            },
+            'started': {
+                describe: 'timestamp (1447938126624)'
+            },
+            'started_by': {
+                describe: 'text (user name)'
+            },
+            'result': {
+                describe: 'text (SUCCESS UNSTABLE FAILURE)'
+            },
+            'change_set': {
+                describe: 'text (some text)'
+            }
+        })
+        .help('help')
+        .alias('h', 'help')
+        .argv,
     async = require("async"),
     log4js = require('log4js'),
     pgClient = require("./components/pgClient"),
@@ -12,6 +37,9 @@ var conf = require("config").get("conf"),
 var log = log4js.getLogger("main"),
     logFlow = log4js.getLogger("flow");
 
+if(argv.help || argv.h) {
+    return
+}
 
 logFlow.info(argv);
 
