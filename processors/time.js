@@ -2,10 +2,7 @@ var conf = require("config").get("conf"),
     log4js = require('log4js'),
     fs = require('fs'),
     request = require("request"),
-    pgClient = require("../components/pgClient"),
-    query = "INSERT INTO faf_metrics_build_time (" +
-        "build_id, task_name, task_time" +
-        ") VALUES ($1, $2, $3)";
+    pgClient = require("../components/pgClient");
 
 var procLog = log4js.getLogger("timeProcessor");
 
@@ -22,42 +19,7 @@ module.exports = {
                 return;
             }
 
-            var queryArr = [],
-                data,
-                processed = [];
-
-            try {
-                data = JSON.parse(body);
-
-                procLog.debug("Got timing data for job: ", job.name);
-
-                // calc average data for repeated tasks
-                data.forEach(function(item) {
-                    if (typeof processed[item[0]] !== "undefined") {
-                        processed[item[0]] = Math.round((processed[item[0]] + item[1]) / 2);
-                    } else {
-                        processed[item[0]] = item[1];
-                    }
-                });
-
-                Object.keys(processed).forEach(function(key) {
-                    queryArr.push([query, [build.build_id, key, processed[key]]]);
-                });
-
-                procLog.debug("Going to save timing data for job: ", job.name, queryArr);
-
-                pgClient.doQueryStack(queryArr).done(function(res) {
-                    procLog.debug("Saved timing data for job: ", job.name);
-                    callback(null, {time: data.length});
-                }).fail(function(err){
-                    procLog.error("Failed to save timing data for job: ", job.name);
-                    callback(err);
-                });
-
-            } catch (e) {
-                procLog.warn("Failed to get timing data for job: ", job.name);
-                callback(e);
-            }
+            pgClient.saveTimeData(job, body, build, callback);
         });
     }
 };

@@ -8,8 +8,9 @@ var pg = require('pg'),
     pgConnectionEstablished = false;
 
 
-log4js.configure(conf.log4js);
+    log4js.configure(conf.log4js);
 var logFlow = log4js.getLogger("flow");
+var procLog = log4js.getLogger("timeProcessor");
 
 function connect() {
     var dfr = new Deferred();
@@ -51,6 +52,9 @@ function connect() {
 module.exports = {
     doQuery: doQuery,
     doQueryStack: doQueryStack,
+    saveTimeData: saveTimeData,
+    saveSizeData: saveSizeData,
+    saveCoverageData: saveCoverageData,
 
     init: function() {
 
@@ -230,4 +234,104 @@ function getBuildId(job_id, build, callback) {
         var build_id = res && res.rows && res.rows[0] && res.rows[0].build_id;
         callback(null, build_id);
     }).fail(callback);
+}
+
+function saveTimeData(job, body, build, callback) {
+    var query = "INSERT INTO faf_metrics_build_time (" +
+        "build_id, task_name, task_time" +
+        ") VALUES ($1, $2, $3)";
+
+    var queryArr = [],
+        data,
+        processed = [];
+
+    try {
+        data = JSON.parse(body);
+
+        procLog.debug("Got timing data for job: ", job.name);
+
+        // calc average data for repeated tasks
+        data.forEach(function(item) {
+            if (typeof processed[item[0]] !== "undefined") {
+                processed[item[0]] = Math.round((processed[item[0]] + item[1]) / 2);
+            } else {
+                processed[item[0]] = item[1];
+            }
+        });
+
+        Object.keys(processed).forEach(function(key) {
+            queryArr.push([query, [build.build_id, key, processed[key]]]);
+        });
+
+        procLog.debug("Going to save timing data for job: ", job.name, queryArr);
+
+        doQueryStack(queryArr).done(function(res) {
+            procLog.debug("Saved timing data for job: ", job.name);
+            callback(null, {time: data.length});
+        }).fail(function(err){
+            procLog.error("Failed to save timing data for job: ", job.name);
+            callback(err);
+        });
+
+    } catch (e) {
+        procLog.warn("Failed to get timing data for job: ", job.name);
+        callback(e);
+    }
+}
+
+function saveSizeData(job, body, build, callback) {
+    query = "INSERT INTO faf_metrics_build_size (" +
+        "build_id, file_name, file_size" +
+        ") VALUES ($1, $2, $3)";
+
+    var queryArr = [],
+        data,
+        processed = [];
+
+    try {
+        data = JSON.parse(body);
+
+        procLog.debug("Got data for job: ", job.name);
+
+
+        data.forEach(function(item) {
+            queryArr.push([query, [build.build_id, item.name, item.size]]);
+        });
+
+        procLog.debug("Going to save data for job: ", job.name, queryArr);
+
+        doQueryStack(queryArr).done(function(res) {
+            procLog.debug("Saved data for job: ", job.name);
+            callback(null, {time: data.length});
+        }).fail(function(err){
+            procLog.error("Failed to save data for job: ", job.name);
+            callback(err);
+        });
+
+    } catch (e) {
+        procLog.warn("Failed to get data for job: ", job.name);
+        callback(e);
+    }}
+
+function saveCoverageData(job, build, statistic, callback) {
+    var sql =
+        "INSERT INTO faf_metrics_build_coverage (" +
+        "build_id, " +
+        "functionsCovered, " +
+        "branchesCovered, " +
+        "linesCovered) " +
+        "VALUES ($1, $2, $3, $4)";
+
+    doQuery(sql, [
+        build.build_id,
+        statistic.functionsCovered,
+        statistic.branchesCovered,
+        statistic.linesCovered
+    ]).done(function () {
+        procLog.debug("Saved coverage statistic for job ", job.name);
+        callback(null, statistic);
+    }).fail(function (err) {
+        procLog.error("Failed to save coverage statistic for job ", job.name);
+        callback(err);
+    });
 }
