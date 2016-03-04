@@ -6,7 +6,8 @@ var conf = require("config").get("conf"),
     fs = require("fs"),
     pgClient = require("../components/pgClient");
 
-var procLog = log4js.getLogger("coverageProcessor");
+var procLog = log4js.getLogger("coverageProcessor"),
+    logFlow = log4js.getLogger("flow");
 
 function getStatisticFromXML(xmlData) {
 
@@ -72,29 +73,33 @@ function getStatisticFromXML(xmlData) {
     return dfr;
 }
 
-function getCoverageXMLFile(job) {
+function getCoverageXMLFile(job, reportPath) {
     var dfr = new Deferred();
 
-    fs.readFile("build/metrics/cobertura-coverage.xml", "ascii", function(error, body) {
-        if (!error) {
-            dfr.resolve(body);
-            return;
-        } else {
-            procLog.warn("Failed to get data for job: ", job.name);
-            dfr.reject("Failed to load XML file from a job. " + error);
-        }
-    });
+    if(fs.existsSync(reportPath)) {
+        fs.readFile(reportPath, "ascii", function (error, body) {
+            if (!error) {
+                dfr.resolve(body);
+                return;
+            } else {
+                procLog.warn("Failed to get data for job: ", job.name);
+                dfr.reject("Failed to load XML file from a job. " + error);
+            }
+        });
+    } else {
+        logFlow.warn("File Coverage report not exists");
+    }
 
     return dfr;
 }
 
 module.exports = {
 
-    run: function (job, build, callback) {
+    run: function (job, build, reportPath, callback) {
 
         procLog.debug("Checking job: ", job.name);
 
-        getCoverageXMLFile(job, build).done(function (xmlCoverageFileContent) {
+        getCoverageXMLFile(job, reportPath, build).done(function (xmlCoverageFileContent) {
 
             procLog.debug("Got XMl file from buildmater for job ", job.name);
 

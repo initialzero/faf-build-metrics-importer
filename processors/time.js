@@ -4,23 +4,29 @@ var conf = require("config").get("conf"),
     request = require("request"),
     pgClient = require("../components/pgClient");
 
-var procLog = log4js.getLogger("timeProcessor");
+var procLog = log4js.getLogger("timeProcessor"),
+    logFlow = log4js.getLogger("flow");
 
 module.exports = {
 
-    run: function(job, build, callback) {
+    run: function(job, build, reportPath, callback) {
 
         procLog.debug("checking job: ", job.name);
 
-        fs.readFile("build/metrics/time.json", 'utf8', function(error,  body) {
-            if (error) {
-                procLog.warn("Failed to get timing data for job: ", job.name);
-                callback(null, error);
-                return;
-            }
+        if(fs.existsSync(reportPath)) {
 
-            pgClient.saveTimeData(job, body, build, callback);
-        });
+            fs.readFile(reportPath, 'utf8', function (error, body) {
+                if (error) {
+                    procLog.warn("Failed to get timing data for job: ", job.name);
+                    callback(null, error);
+                    return;
+                }
+
+                pgClient.saveTimeData(job, body, build, callback);
+            });
+        } else {
+            logFlow.warn("File Time report not exists");
+        }
     }
 };
 
