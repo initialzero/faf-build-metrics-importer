@@ -25,7 +25,7 @@ module.exports = {
                 pgClient.saveTimeData(job, body, build, callback);
             });
         } else {
-            logFlow.warn("File Time report not exists");
+            callback("File time report don’t exists");
         }
     }
 };

@@ -23,7 +23,7 @@ module.exports = {
 
             });
         } else {
-            logFlow.warn("File Size report not exists");
+            callback("File size report don’t exists");
         }
     }
 };

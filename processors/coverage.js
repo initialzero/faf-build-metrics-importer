@@ -76,19 +76,15 @@ function getStatisticFromXML(xmlData) {
 function getCoverageXMLFile(job, reportPath) {
     var dfr = new Deferred();
 
-    if(fs.existsSync(reportPath)) {
-        fs.readFile(reportPath, "ascii", function (error, body) {
-            if (!error) {
-                dfr.resolve(body);
-                return;
-            } else {
-                procLog.warn("Failed to get data for job: ", job.name);
-                dfr.reject("Failed to load XML file from a job. " + error);
-            }
-        });
-    } else {
-        logFlow.warn("File Coverage report not exists");
-    }
+    fs.readFile(reportPath, "ascii", function (error, body) {
+        if (!error) {
+            dfr.resolve(body);
+            return;
+        } else {
+            procLog.warn("Failed to get data for job: ", job.name);
+            dfr.reject("Failed to load XML file from a job. " + error);
+        }
+    });
 
     return dfr;
 }
@@ -99,24 +95,29 @@ module.exports = {
 
         procLog.debug("Checking job: ", job.name);
 
-        getCoverageXMLFile(job, reportPath, build).done(function (xmlCoverageFileContent) {
+        if(fs.existsSync(reportPath)) {
+            getCoverageXMLFile(job, reportPath, build).done(function (xmlCoverageFileContent) {
 
-            procLog.debug("Got XMl file from buildmater for job ", job.name);
+                procLog.debug("Got XMl file from buildmater for job ", job.name);
 
-            getStatisticFromXML(xmlCoverageFileContent).done(function (statistic) {
+                getStatisticFromXML(xmlCoverageFileContent).done(function (statistic) {
 
-                procLog.debug("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.name, "), saving it ...");
+                    procLog.debug("Got coverage statistic from XML file: ", statistic, " (job name is: ", job.name, "), saving it ...");
 
-                pgClient.saveCoverageData(job, build, statistic, callback);
+                    pgClient.saveCoverageData(job, build, statistic, callback);
 
-            }).fail(function(err){
-                procLog.error("Failed to get coverage statistic from XML file, (job name is: ", job.name, ")");
-                callback(err);
+                }).fail(function(err){
+                    procLog.error("Failed to get coverage statistic from XML file, (job name is: ", job.name, ")");
+                    callback(err);
+                });
+            }).fail(function (reason) {
+                procLog.warn("Failed to get XML for job ", job.name, ". Reason: ", reason);
+                callback(null, reason);
             });
-        }).fail(function (reason) {
-            procLog.warn("Failed to get XML for job ", job.name, ". Reason: ", reason);
-            callback(null, reason);
-        });
+        } else {
+            callback("File Coverage report don’t exists");
+        }
+
 
     }
 };
