@@ -10,6 +10,9 @@
     "type": "git",
     "url": "https://github.com/Jaspersoft/faf-build-metrics-importer.git"
   },
+  "scripts": {
+    "setup-db": "node ./config/setupDB.js"
+  },
   "dependencies": {
     "Deferred": "latest",
     "async": "~0.9.0",
