@@ -9,7 +9,7 @@ var db_name = conf.pg.db_name,
     usr = conf.pg.usr;
 
 function createDB() {
-    var run = spawn('psql', ['--host=localhost', '--username=postgres', '--command=CREATE DATABASE "' + db_name + ';"']);
+    var run = spawn('psql', ['--host=' + host, '--username=' + usr, '--command=CREATE DATABASE "' + db_name + ';"']);
 
     run.stdout.on('data', function (data) {
         console.log(data.toString());
