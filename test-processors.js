@@ -49,7 +49,12 @@ var JobMock =  {name: 'ldfjhsdfbj', id: 17},
         linesCovered: 0.34646739130434784
     };
 
-time.run(JobMock, {}, function() {});
-size.run(JobMock, {}, function() {});
-coverage.run(JobMock, buildMoch, statisticMock, function() {});
+var reportPath = {
+    coverage: "./build/metrics/cobertura-coverage.xml",
+    time: "./build/metrics/time.json",
+    size: "./build/metrics/size.json"
+};
 
+time.run(JobMock, {}, reportPath.time, function() {});
+size.run(JobMock, {}, reportPath.size, function() {});
+coverage.run(JobMock, buildMoch, reportPath.coverage, function() {});

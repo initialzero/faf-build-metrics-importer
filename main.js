@@ -19,6 +19,15 @@ var conf = require("config").get("conf"),
             },
             'change-set': {
                 describe: 'text (some text)'
+            },
+            'coverage-report-path': {
+                describe: 'path to coverage report'
+            },
+            'time-report-path': {
+                describe: 'path to time report'
+            },
+            'size-report-path': {
+                describe: 'path to size report'
             }
         })
         .help('help')
