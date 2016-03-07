@@ -14,17 +14,6 @@
       }
     },
     "interval": 300000,
-    "jenkins": {
-      "usr": "",
-      "pwd": "",
-      "url": "build-master-fafj.jaspersoft.com",
-      "include": [
-        "^module-*"
-      ],
-      "exclude": [
-        "^faf-metrix$"
-      ]
-    },
     "pg": {
       "usr": "postgres",
       "pwd": "postgres",
