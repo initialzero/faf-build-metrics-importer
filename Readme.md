@@ -11,102 +11,56 @@ cd faf-build-metrics-importer
 npm install
 ```
 
-2\. Create a new database in PostreSQL. If you want, you can do this by next command:
-```
-psql -h localhost -U postgres -c "CREATE DATABASE <databaseName>;"
-```
-
-3\. After this, you need to import DB schema into your PostreSQL database:
-```
-psql -h <hostName> -U <userName> -d <databaseName> -f config/db_schema.sql
-```
-
-4\. Next, copy config file  from the sample and edit it with your own settings:
+2\. Copy config file  from the sample and edit it with your own settings:
 ```
 cp config/default.json.example config/default.json
 ```
+
+3\. After this, you need create a new database in PostreSQL and import DB schema into your PostreSQL database, you can do this by next command:
+```
+npm run setup-db
+```
+
+
 The settings you need to declare are:
  * in **pg** key
   * database name -- required
   * database user name -- not required
   * database user password -- not required
- * in **jenkins** key
-  * url of the Jenkins -- required
-  * username -- not required
-  * password -- not required
 
 Usage
 =======
 
-The tool can be run via **main.js** script. The main idea behind script is ***checking new information from Jenkins***. Thus, it means what **main.js** should be launched as a daemon.
+The tool can be run via **main.js** script.
 
-**Accepts argument `--job=<job name>` ** for run script only for specified job
+**Require arguments `--job=<job name> --build=<id build> --started=<timestamp>(1447938126624) --started-by=<user name> --result=<SUCCESS UNSTABLE FAILURE> --change-set=<text> --coverage-report-path=<path to coverage report> --time-report-path=<path to time report> --size-report-path=<path to size report>` 
 
 For the test run you can type next command:
 ```
-node ./main --job <job-name>
-// or
-node ./main.js
+node ./main --job=<job name> --build=<id build> --started=<timestamp>(1447938126624) --started-by=<user name> --result=<SUCCESS UNSTABLE FAILURE> --change-set=<text> --coverage-report-path=<path to coverage report> --time-report-path=<path to time report> --size-report-path=<path to size report>
 ```
-the sample output can be like this one:
+the output can be like this one:
 ```
-$ node ./main.js 
-[2014-12-19 10:45:11.683] [INFO] flow - Last build info:  {}
-[2014-12-19 10:45:11.687] [INFO] flow - Start checking CI jobs...
-[2014-12-19 10:45:11.687] [INFO] flow - Getting full list of jobs...
-[2014-12-19 10:45:17.586] [INFO] flow - All done, sleeping for 300 seconds before next circle of checking...
+$ node ./main.js --job=module-jrs-ui-pro-trunk-jade-new-css-html --build=35 --started=1447938126624 --started-by=user name --result=SUCCESS --change-set=some text --coverage-report-path=./build/metrics/cobertura-coverage.xml --time-report-path=./build/metrics/time.json --size-report-path=./build/metrics/size.json
+[2016-03-07 16:17:19.733] [INFO] flow - Going to initialize processors...
+[2016-03-07 16:17:19.734] [INFO] flow - Processors have been initialized, so let's continue
+[2016-03-07 16:17:19.734] [INFO] flow - Job name received, run import for: module-jrs-ui-pro-trunk-jade-new-css-html
+[2016-03-07 16:17:20.142] [INFO] flow - Finish
+[2016-03-07 16:17:20.142] [INFO] flow - All done.
 ```
-Looks fine ! So, now it's time to put this command to some bash script and daemonize it.
 
-#### credentials as command line arguments
-credentials for jenkins can be provided as arguments:
-`node ./main.js -u username -p password`
-
-#### log server
-goto `http://<url>:8085` - you will see log output
-
-Making it Daemon
-=======
-
-The best way to make this service daemon, it to create a system service which will be launched during startup. We don't provide support for all operation systems, at least we support Ubuntu. So, read below how to make it.
-
-### Ubuntu
-
-1\. Became a root
-
-2\. Copy init.d file and set proper execution rights:
-```
-cp init.d/ubuntu/faf-build-metrics-importer /etc/init.d/
-chmod 775 /etc/init.d/faf-build-metrics-importer
-```
-and repace some variables inside this file:
- * WORKING_DIRECTORY=\<DIRECTORY\>
- * DAEMON=\<PATH_TO_NODE\>
- * USER_TO_RUN=\<USERNAME\>
-
-3\. Set up the script for execution
-```
-update-rc.d faf-build-metrics-importer defaults 97 03
-```
-If you need to remove it from the launch list, you can use next command:
-```
-update-rc.d -f faf-build-metrics-importer remove
-```
 
 Processor
 ==================
 Processor in terms of this application is a kind of a plugin which can be executed while recessing each CI job.
-What does it mean ? Let's say there is a **processor** added bu someone.
-So, at some moment application will call this **processor** with parameters **job** and **build**  which will describe the
-CI Job and the current build information of this job.
-And the **processor** can do any actions it wants on this job.
-
-Seems easy, right ?
+What does it mean ? Let's say there is a **processor** added by someone.
+So, at some moment application will call this **processor** with parameters **job**, **build** and **reportPath** (path to processor report file) which will fetch
+data from report file and call **pgClient** method which will save this data to database.
 
 Now, let's see how to add such processors
 
-How to add a processor
-==================
+##How to add a processor
+
 1\. Copy an empty skeleton of processor and name it like you want, for example:
 ```
 cp processors/skeleton.js.example processors/myProcessor.js
@@ -114,9 +68,11 @@ cp processors/skeleton.js.example processors/myProcessor.js
 
 2\. Modify the processor like you want...
 
+3\. Extend pgClient with method which will save fetched data to db
 
-postres module
-===============
+
+##Postgres module
+
 Uses [node-postgres](https://github.com/brianc/node-postgres/wiki/Client#paramaterized-query-with-optional-callback-supplied). Has few methods.
 
 ##### doQuery
