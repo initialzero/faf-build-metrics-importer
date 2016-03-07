@@ -1,9 +1,8 @@
 var conf = require("config").get("conf"),
-    argv = require('optimist').argv,
     yargs = require('yargs')
         .usage('CLI arguments:')
         .options({
-            'job_name': {
+            'job': {
                 describe: 'text (module-jrs-ui-pro-trunk-jade-new-css-html)'
             },
             'build': {
@@ -12,18 +11,28 @@ var conf = require("config").get("conf"),
             'started': {
                 describe: 'timestamp (1447938126624)'
             },
-            'started_by': {
+            'started-by': {
                 describe: 'text (user name)'
             },
             'result': {
                 describe: 'text (SUCCESS UNSTABLE FAILURE)'
             },
-            'change_set': {
+            'change-set': {
                 describe: 'text (some text)'
+            },
+            'coverage-report-path': {
+                describe: 'path to coverage report'
+            },
+            'time-report-path': {
+                describe: 'path to time report'
+            },
+            'size-report-path': {
+                describe: 'path to size report'
             }
         })
         .help('help')
         .alias('h', 'help')
+        .demand(['job','build', 'started', 'started-by', 'result', 'change-set', 'coverage-report-path', 'time-report-path', 'size-report-path'])
         .argv,
     async = require("async"),
     log4js = require('log4js'),
@@ -37,11 +46,11 @@ var conf = require("config").get("conf"),
 var log = log4js.getLogger("main"),
     logFlow = log4js.getLogger("flow");
 
-if(argv.help || argv.h) {
+if(yargs.help || yargs.h) {
     return
 }
 
-logFlow.info(argv);
+logFlow.info(yargs);
 
 pgClient.init().fail(function() {
 
@@ -60,9 +69,9 @@ pgClient.init().fail(function() {
         // ok great, everything is done, let's proceed
         logFlow.info("Processors have been initialized, so let's continue");
 
-        if (argv.job) {
-            logFlow.info("Job name received, run import for: " + argv.job);
-            jobFlow(argv.job, argv.build, argv.started, argv.started_by, argv.result, argv.change_set, finish);
+        if (yargs.job) {
+            logFlow.info("Job name received, run import for: " + yargs.job);
+            jobFlow(yargs.job, yargs.build, yargs.started, yargs["started-by"], yargs.result, yargs["change-set"], finish);
         } else {
             logFlow.info("Please run with arguments");
         }
@@ -150,10 +159,15 @@ function processReports(callback, results) {
     log.debug("processReports. Job:", job.name, " Build:", build.number);
 
     var processors = processorsHeap.getAllProcessors();
+    var reportPath = {
+        coverage: yargs["coverage-report-path"],
+        time: yargs["time-report-path"],
+        size: yargs["size-report-path"]
+    };
 
     Object.keys(processors).forEach(function(type) {
         if (processors[type].run) {
-            stack.push(async.apply(processors[type].run, job, build));
+            stack.push(async.apply(processors[type].run, job, build, reportPath[type]));
         }
     });
 

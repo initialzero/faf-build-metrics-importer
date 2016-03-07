@@ -4,22 +4,26 @@ var fs = require("fs"),
     request = require("request"),
     pgClient = require("../components/pgClient");
 
-var procLog = log4js.getLogger("sizeProcessor");
+var procLog = log4js.getLogger("sizeProcessor"),
+    logFlow = log4js.getLogger("flow");
 
 module.exports = {
 
-    run: function(job, build, callback) {
+    run: function(job, build, reportPath, callback) {
         procLog.debug("checking job: ", job.name);
 
-        fs.readFile("build/metrics/size.json", "ascii", function(error, body) {
-            if (error ) {
-                procLog.warn("Failed to get data for job: ", job.name);
-                callback(null, error);
-                return;
-            }
-            pgClient.saveSizeData(job, body, build, callback);
+        if(fs.existsSync(reportPath)) {
+            fs.readFile(reportPath, "ascii", function(error, body) {
+                if (error ) {
+                    procLog.warn("Failed to get data for job: ", job.name);
+                    callback(null, error);
+                    return;
+                }
+                pgClient.saveSizeData(job, body, build, callback);
 
-        });
-
+            });
+        } else {
+            callback("File size report don’t exists");
+        }
     }
 };

@@ -53,7 +53,9 @@ pgClient.init().done(function() {
         },
         function(callback) {
             var run  = spawn('node', ['main.js', '--job=module-jrs-ui-pro-trunk-jade-new-css-html',
-                '--build=35', '--started=1447938126624', '--started_by=user name', '--result=SUCCESS', '--change_set=some text']);
+                '--build=35', '--started=1447938126624', '--started-by=user name', '--result=SUCCESS', '--change-set=some text',
+                '--coverage-report-path=./build/metrics/cobertura-coverage.xml', '--time-report-path=./build/metrics/time.json',
+                '--size-report-path=./build/metrics/size.json']);
 
             run.stdout.on('data', function (data) {
                 console.log(data.toString());
