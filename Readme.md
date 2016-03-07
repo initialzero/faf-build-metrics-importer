@@ -54,7 +54,7 @@ Processor
 ==================
 Processor in terms of this application is a kind of a plugin which can be executed while recessing each CI job.
 What does it mean ? Let's say there is a **processor** added by someone.
-So, at some moment application will call this **processor** with parameters **job** and **build**  which will describe the
+So, at some moment application will call this **processor** with parameters **job**, **build** and **reportPath**(path to processor report file) which will describe the
 CI Job and the current build information of this job.
 And the **processor** can do any actions it wants on this job.
 
@@ -62,8 +62,8 @@ Seems easy, right ?
 
 Now, let's see how to add such processors
 
-How to add a processor
-==================
+##How to add a processor
+
 1\. Copy an empty skeleton of processor and name it like you want, for example:
 ```
 cp processors/skeleton.js.example processors/myProcessor.js
@@ -74,8 +74,8 @@ cp processors/skeleton.js.example processors/myProcessor.js
 3\. Extend pgClient with method which will save fetched data to db
 
 
-postres module
-===============
+##postres module
+
 Uses [node-postgres](https://github.com/brianc/node-postgres/wiki/Client#paramaterized-query-with-optional-callback-supplied). Has few methods.
 
 ##### doQuery
